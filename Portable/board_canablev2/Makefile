@@ -141,7 +141,7 @@ C_INCLUDES =  \
 -I../../Drivers/CMSIS/Include \
 -I../../Drivers/STM32G4xx_HAL_Driver/Inc \
 -I../../Drivers/STM32G4xx_HAL_Driver/Inc/Legacy \
--I../../Drivers/CMSIS/Device/ST/STM32G4xx/Include \
+-I../../Drivers/CMSIS_DEVICE_G4/Include \
 -I../../Drivers/CMSIS/Include \
 -I../../Middlewares/ST/STM32_USB_Device_Library/Core/Inc \
 -I../../Middlewares/Third_Party/FreeRTOS/Source/include \

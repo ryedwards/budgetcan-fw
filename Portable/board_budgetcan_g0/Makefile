@@ -140,10 +140,10 @@ AS_INCLUDES =
 C_INCLUDES =  \
 -IInc \
 -I../../Core/Inc \
--I../../Drivers/CMSIS/Include \
+-I../../Drivers/STM32G0xx_HAL_Driver/Inc \
 -I../../Drivers/STM32G0xx_HAL_Driver/Inc \
 -I../../Drivers/STM32G0xx_HAL_Driver/Inc/Legacy \
--I../../Drivers/CMSIS/Device/ST/STM32G0xx/Include \
+-I../../Drivers/CMSIS_DEVICE_G0/Include \
 -I../../Drivers/CMSIS/Include \
 -I../../Middlewares/ST/STM32_USB_Device_Library/Core/Inc \
 -I../../Middlewares/Third_Party/FreeRTOS/Source/include \
