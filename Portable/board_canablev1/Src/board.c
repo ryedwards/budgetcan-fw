@@ -144,6 +144,7 @@ void board_main_task_cb(void)
 void board_on_can_enable_cb(uint8_t channel)
 {
   UNUSED(channel);
+  led_set_active(&hled2);
 }
 
 /** @brief Function called when the CAN is disabled for this channel
@@ -153,6 +154,7 @@ void board_on_can_enable_cb(uint8_t channel)
 void board_on_can_disable_cb(uint8_t channel)
 {
   UNUSED(channel);
+  led_set_inactive(&hled2);
 }
 
 /** @brief Function called when a CAN frame is send on this channel
@@ -172,7 +174,7 @@ void board_on_can_tx_cb(uint8_t channel)
 void board_on_can_rx_cb(uint8_t channel)
 {
   UNUSED(channel);
-  led_indicate_rxtx(&hled2);
+  led_indicate_rxtx(&hled1);
 }
 
 /** @brief Function called to set the CAN termination resistor ON of OFF
