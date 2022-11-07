@@ -387,8 +387,7 @@ static uint8_t USBD_GS_CAN_EP0_RxReady(USBD_HandleTypeDef *pdev) {
   switch (req->bRequest) {
 
     case GS_USB_BREQ_HOST_FORMAT:
-      // TODO process host data (expect 0x0000beef in byte_order)
-      memcpy(&hcan->host_config, hcan->ep0_buf, sizeof(hcan->host_config));
+      /* this feature is unused by this firmware */
       break;
 
     case GS_USB_BREQ_IDENTIFY:

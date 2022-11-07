@@ -72,7 +72,6 @@ typedef struct {
   uint8_t ep0_buf[128]; /* TODO: There is a memory overrun if set to 64 - need to find it - no overrun with 128 */
   __IO uint32_t TxState;
   USBD_SetupReqTypedef last_setup_request;
-  struct gs_host_config host_config;
   struct gs_host_frame from_host_frame;
   CAN_HANDLE_TYPEDEF *channels[CAN_NUM_CHANNELS];
   bool dfu_detach_requested;
