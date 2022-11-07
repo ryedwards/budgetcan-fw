@@ -129,11 +129,11 @@ void MX_GPIO_Init(void)
 
 }
 
-/** @brief Function to init all of the LEDs that this board supports
+/** @brief Function to init any features specific to this board
  *  @param None
  *  @retval None
  */
-void board_led_init(void)
+void board_init(void)
 {
   led_init(&hled1, LED1_GPIO_Port, LED1_Pin, LED_MODE_INACTIVE, LED_ACTIVE_HIGH);
   led_init(&hled2, LED2_GPIO_Port, LED2_Pin, LED_MODE_INACTIVE, LED_ACTIVE_HIGH);
@@ -160,11 +160,11 @@ void board_usbd_gs_can_set_channel(USBD_HandleTypeDef *hUSB)
   USBD_GS_CAN_SetChannel(hUSB, 1, &hfdcan2);
 }
 
-/** @brief Function to periodically update the LED states - should be called as fast as possible
+/** @brief Function to periodically update any features on the board from the main task
  *  @param None
  *  @retval None
  */
-void board_led_update(void)
+void board_main_task_cb(void)
 {
   /* update all the LEDs */
  led_update(&hled1);

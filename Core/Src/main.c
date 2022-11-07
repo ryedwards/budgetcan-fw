@@ -111,10 +111,10 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
+  /* Function to allow the board to init any features */
+  board_init();
   /* Initialize the CAN control for the defined board */
   board_can_init();
-  /* Initialize the LED control for the defined board */
-  board_led_init();
 
   USBD_Init(&hUSB, (USBD_DescriptorsTypeDef*)&FS_Desc, DEVICE_FS);
   USBD_RegisterClass(&hUSB, &USBD_GS_CAN);
@@ -234,8 +234,8 @@ void task_main(void *argument)
       dfu_run_bootloader();
     }
 
-    /* update all the LEDs */
-    board_led_update();
+    /* callback function to the board to allow main task routines */
+    board_main_task_cb();
 
     vTaskDelay(1);
   }
