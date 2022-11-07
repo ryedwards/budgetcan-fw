@@ -28,3 +28,21 @@
 [submodule "Drivers/cmsis_device_f3"]
 	path = Drivers/cmsis_device_f3
 	url = https://github.com/STMicroelectronics/cmsis_device_f3.git
+[submodule "Drivers/stm32f0xx_hal_driver"]
+	path = Drivers/stm32f0xx_hal_driver
+	url = https://github.com/STMicroelectronics/stm32f0xx_hal_driver.git
+[submodule "Drivers/stm32g0xx_hal_driver"]
+	path = Drivers/stm32g0xx_hal_driver
+	url = https://github.com/STMicroelectronics/stm32g0xx_hal_driver.git
+[submodule "Drivers/stm32g4xx_hal_driver"]
+	path = Drivers/stm32g4xx_hal_driver
+	url = https://github.com/STMicroelectronics/stm32g4xx_hal_driver.git
+[submodule "Drivers/cmsis_device_f0"]
+	path = Drivers/cmsis_device_f0
+	url = https://github.com/STMicroelectronics/cmsis_device_f0.git
+[submodule "Drivers/cmsis_device_g0"]
+	path = Drivers/cmsis_device_g0
+	url = https://github.com/STMicroelectronics/cmsis_device_g0.git
+[submodule "Drivers/cmsis_device_g4"]
+	path = Drivers/cmsis_device_g4
+	url = https://github.com/STMicroelectronics/cmsis_device_g4.git
