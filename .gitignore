@@ -1,0 +1,16 @@
+/.vscode/
+**/build/
+*.launch
+.settings
+.cproject
+.project
+.mxproject
+*.o
+*.d
+*.bin
+*.asmo
+*.elf
+*~
+.cache/
+compile_commands.json
+/Debug*/
