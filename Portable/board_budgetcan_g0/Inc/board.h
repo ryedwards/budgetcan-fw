@@ -59,6 +59,18 @@ extern "C" {
 #define CAN_NUM_CHANNELS  2
 #define CAN_CLOCK_SPEED   64000000
 
+#define LIN_SUPPORT       1
+#define LIN1_UART         UART1
+#define LIN1_CHANNEL      0
+#define LIN_MAX_DATA_BYTES 8U
+#define LIN_CONFIG_MSG_ID_CMD       0x1FFFFE80
+#define LIN_CONFIG_MSG_ID_DATA      0x1FFFFE81
+//#define LIN_GATEWAY_MSG_ID          0x1FFFFE82
+//#define LIN_GATEWAY_CAN_CH          hfdcan1
+#define IS_LIN_FRAME(can_id)    (can_id == LIN_CONFIG_MSG_ID_CMD \
+                                  || can_id == LIN_CONFIG_MSG_ID_DATA)
+
+
 #define QUEUE_SIZE_HOST_TO_DEV    32
 #define QUEUE_SIZE_DEV_TO_HOST    32
 
@@ -88,6 +100,7 @@ void MX_GPIO_Init(void);
 
 void board_init(void);
 void board_can_init(void);
+void board_lin_init(void);
 void board_usbd_gs_can_set_channel(USBD_HandleTypeDef *hUSB);
 void board_main_task_cb(void);
 

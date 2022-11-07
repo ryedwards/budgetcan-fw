@@ -26,8 +26,14 @@ THE SOFTWARE.
 
 /* Includes ------------------------------------------------------------------*/
 #include "board.h"
+#include "FreeRTOS.h"
+#include "task.h"
 #include "can.h"
+#include "lin.h"
 #include "led.h"
+
+#define TASK_LIN_STACK_SIZE (512 / sizeof(portSTACK_TYPE))
+#define TASK_LIN_STACK_PRIORITY (tskIDLE_PRIORITY + 1)
 
 LED_HandleTypeDef hled1;
 LED_HandleTypeDef hled2;
@@ -36,12 +42,17 @@ LED_HandleTypeDef hled3;
 FDCAN_HandleTypeDef hfdcan1;
 FDCAN_HandleTypeDef hfdcan2;
 
+LIN_HandleTypeDef hlin1;
+
+UART_HandleTypeDef huart1;
+
+static TaskHandle_t xCreatedLINTask;
 
 /**
   * @brief System Clock Configuration
   * @retval None
   */
- void SystemClock_Config(void)
+void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
@@ -49,6 +60,7 @@ FDCAN_HandleTypeDef hfdcan2;
   /** Configure the main internal regulator output voltage
   */
   HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1);
+
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
@@ -68,6 +80,7 @@ FDCAN_HandleTypeDef hfdcan2;
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -129,15 +142,92 @@ void MX_GPIO_Init(void)
 
 }
 
+void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 10417;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart1.Init.ClockPrescaler = UART_PRESCALER_DIV1;
+  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_LIN_Init(&huart1, UART_LINBREAKDETECTLENGTH_10B) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetTxFifoThreshold(&huart1, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetRxFifoThreshold(&huart1, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_DisableFifoMode(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
+
+}
+
+/** @brief UART RX IRQ for this board
+ *  @param None
+ *  @retval None
+ */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  if (huart->Instance == USART1) {
+    lin_handle_uart_rx_IRQ(&hlin1);
+    //set up for next RX for USART1
+    HAL_UART_Receive_IT(&huart1, hlin1.UartRxBuffer, 1);
+  }
+}
+
+/** @brief Function to run the LIN task
+ *  @param None
+ *  @retval None
+ */
+void task_lin(void *argument)
+{
+  UNUSED(argument);
+  /* Infinite loop */
+  for(;;) {
+    /* LIN transmits in blocking mode so put into this task */
+    lin_handler_task(&hlin1);
+
+    vTaskDelay(1);
+  }
+}
+
 /** @brief Function to init any features specific to this board
  *  @param None
  *  @retval None
  */
 void board_init(void)
 {
+  MX_USART1_UART_Init();
+  board_lin_init();
   led_init(&hled1, LED1_GPIO_Port, LED1_Pin, LED_MODE_INACTIVE, LED_ACTIVE_HIGH);
   led_init(&hled2, LED2_GPIO_Port, LED2_Pin, LED_MODE_INACTIVE, LED_ACTIVE_HIGH);
   led_init(&hled3, LED3_GPIO_Port, LED3_Pin, LED_MODE_INACTIVE, LED_ACTIVE_HIGH);
+
+  xTaskCreate(task_lin, "LIN Task", TASK_LIN_STACK_SIZE, NULL,
+                TASK_LIN_STACK_PRIORITY, &xCreatedLINTask);
 }
 
 /** @brief Function to init all of the CAN channels this board supports
@@ -148,6 +238,16 @@ void board_can_init(void)
 {
   can_init(&hfdcan1, FDCAN1);
   can_init(&hfdcan2, FDCAN2);
+}
+
+/** @brief Function to init all of the LIN channels this board supports
+ *  @param None
+ *  @retval None
+ */
+void board_lin_init(void)
+{
+  lin_init(&hlin1, LIN1_CHANNEL, &huart1);
+  HAL_GPIO_WritePin(LIN1_NSLP_GPIO_Port, LIN1_NSLP_Pin, GPIO_PIN_SET);
 }
 
 /** @brief Function to assign the CAN HW pointers to the channel index in the USB handle
@@ -253,3 +353,4 @@ GPIO_PinState board_get_can_term(uint8_t channel)
   }
   return 0;
 }
+

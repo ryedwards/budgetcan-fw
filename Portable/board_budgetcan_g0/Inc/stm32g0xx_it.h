@@ -51,6 +51,8 @@ void HardFault_Handler(void);
 void USB_UCPD1_2_IRQHandler(void);
 void TIM1_BRK_UP_TRG_COM_IRQHandler(void);
 void TIM16_FDCAN_IT0_IRQHandler(void);
+void TIM17_FDCAN_IT1_IRQHandler(void);
+void USART1_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */

@@ -30,6 +30,7 @@
 #include "usbd_gs_can.h"
 #include "board.h"
 #include "can.h"
+#include "lin.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -209,6 +210,16 @@ void task_main(void *argument)
   {
     /* Check the queue to see if we have data FROM the host to handle */
     if (xQueueReceive(queue_from_hostHandle, &frame, 0) == pdPASS){
+#if defined(LIN_SUPPORT)
+      if (IS_LIN_FRAME((frame.can_id & 0x1FFFFFFF))) {
+        /* this is a special case for setting up the LIN handler tables */
+        lin_config((frame.can_id & 0x1FFFFFFF), frame.classic_can.data);
+        frame.flags = 0x0;
+        frame.reserved = 0x0;
+        xQueueSendToBack(queue_to_hostHandle, &frame, 0);
+        continue; /* just loop again so below code runs normally */
+      }
+#endif /* LIN_SUPPORT */
       if (can_send(USBD_GS_CAN_GetChannelHandle(&hUSB,frame.channel), &frame)) {
         /* Echo sent frame back to host */
         frame.flags = 0x0;

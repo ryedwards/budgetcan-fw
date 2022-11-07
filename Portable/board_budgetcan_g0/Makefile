@@ -52,6 +52,8 @@ C_SOURCES =  \
 ../../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_rcc_ex.c \
 ../../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_tim.c \
 ../../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_tim_ex.c \
+../../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_uart.c \
+../../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_uart_ex.c \
 ../../Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_ll_usb.c \
 ../../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c \
 ../../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c \
@@ -69,6 +71,7 @@ C_SOURCES =  \
 ../../Core/Src/app_freertos.c \
 ../../Core/Src/can.c \
 ../../Core/Src/led.c \
+../../Core/Src/lin.c \
 ../../Core/Src/main.c \
 ../../Core/Src/syscalls.c \
 ../../Core/Src/sysmem.c \
