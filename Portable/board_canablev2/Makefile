@@ -64,8 +64,7 @@ C_SOURCES =  \
 ../../Middlewares/Third_Party/FreeRTOS/Source/stream_buffer.c \
 ../../Middlewares/Third_Party/FreeRTOS/Source/tasks.c \
 ../../Middlewares/Third_Party/FreeRTOS/Source/timers.c \
-../../Middlewares/Third_Party/FreeRTOS/Source/timers.c \
-../../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM0/port.c \
+../../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/port.c \
 ../../Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c \
 ../../Core/Src/app_freertos.c \
 ../../Core/Src/can.c \
@@ -145,7 +144,7 @@ C_INCLUDES =  \
 -I../../Drivers/CMSIS/Include \
 -I../../Middlewares/ST/STM32_USB_Device_Library/Core/Inc \
 -I../../Middlewares/Third_Party/FreeRTOS/Source/include \
--I../../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM0
+-I../../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F
 
 # compile gcc flags
 ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections

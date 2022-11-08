@@ -65,7 +65,6 @@ C_SOURCES =  \
 ../../Middlewares/Third_Party/FreeRTOS/Source/stream_buffer.c \
 ../../Middlewares/Third_Party/FreeRTOS/Source/tasks.c \
 ../../Middlewares/Third_Party/FreeRTOS/Source/timers.c \
-../../Middlewares/Third_Party/FreeRTOS/Source/timers.c \
 ../../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM0/port.c \
 ../../Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c \
 ../../Core/Src/app_freertos.c \

@@ -62,7 +62,6 @@ C_SOURCES =  \
 ../../Middlewares/Third_Party/FreeRTOS/Source/stream_buffer.c \
 ../../Middlewares/Third_Party/FreeRTOS/Source/tasks.c \
 ../../Middlewares/Third_Party/FreeRTOS/Source/timers.c \
-../../Middlewares/Third_Party/FreeRTOS/Source/timers.c \
 ../../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM0/port.c \
 ../../Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c \
 ../../Core/Src/app_freertos.c \
@@ -150,7 +149,7 @@ ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -fdata-sections -ffuncti
 CFLAGS += $(MCU) $(C_DEFS) $(C_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections
 
 ifeq ($(DEBUG), 1)
-CFLAGS += -g3 -gdwarf-2
+CFLAGS += -g -gdwarf-2
 endif
 
 
