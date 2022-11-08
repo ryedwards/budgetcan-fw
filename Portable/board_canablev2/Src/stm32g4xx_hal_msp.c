@@ -121,7 +121,7 @@ void HAL_FDCAN_MspInit(FDCAN_HandleTypeDef* hfdcan)
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
     /* FDCAN1 interrupt Init */
-    HAL_NVIC_SetPriority(FDCAN1_IT0_IRQn, 0, 0);
+    HAL_NVIC_SetPriority(FDCAN1_IT0_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(FDCAN1_IT0_IRQn);
   /* USER CODE BEGIN FDCAN1_MspInit 1 */
 
@@ -188,7 +188,7 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef* hpcd)
     /* Peripheral clock enable */
     __HAL_RCC_USB_CLK_ENABLE();
     /* USB interrupt Init */
-    HAL_NVIC_SetPriority(USB_HP_IRQn, 0, 0);
+    HAL_NVIC_SetPriority(USB_HP_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(USB_HP_IRQn);
   /* USER CODE BEGIN USB_MspInit 1 */
 
