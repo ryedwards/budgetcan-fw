@@ -78,8 +78,7 @@ void can_init(CAN_HANDLE_TYPEDEF *hcan, CAN_TYPEDEF *instance)
   HAL_CAN_Init(hcan);
 
 #elif defined(FDCAN1)
-  hcan->Instance = instance;
-  hcan->Init.ClockDivider = FDCAN_CLOCK_DIV1;
+  hcan->Instance = instance;  
   hcan->Init.FrameFormat = FDCAN_FRAME_FD_BRS;
   hcan->Init.Mode = FDCAN_MODE_NORMAL;
   hcan->Init.AutoRetransmission = DISABLE;
@@ -96,7 +95,21 @@ void can_init(CAN_HANDLE_TYPEDEF *hcan, CAN_TYPEDEF *instance)
   hcan->Init.StdFiltersNbr = 0;
   hcan->Init.ExtFiltersNbr = 0;
   hcan->Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
-
+#if defined(STM32H7)
+  hcan->Init.MessageRAMOffset = 0;
+  hcan->Init.RxFifo0ElmtsNbr = 0;
+  hcan->Init.RxFifo0ElmtSize = FDCAN_DATA_BYTES_8;
+  hcan->Init.RxFifo1ElmtsNbr = 0;
+  hcan->Init.RxFifo1ElmtSize = FDCAN_DATA_BYTES_8;
+  hcan->Init.RxBuffersNbr = 0;
+  hcan->Init.RxBufferSize = FDCAN_DATA_BYTES_8;
+  hcan->Init.TxEventsNbr = 0;
+  hcan->Init.TxBuffersNbr = 0;
+  hcan->Init.TxFifoQueueElmtsNbr = 0;  
+  hcan->Init.TxElmtSize = FDCAN_DATA_BYTES_8;
+#else
+  hcan->Init.ClockDivider = FDCAN_CLOCK_DIV1;
+#endif  
   HAL_FDCAN_Init(hcan);
 #endif
 }
@@ -229,9 +242,15 @@ void can_enable(CAN_HANDLE_TYPEDEF *hcan, bool loop_back, bool listen_only, bool
   // Start CAN using HAL
   HAL_FDCAN_Start(hcan);
 
-  HAL_FDCAN_ActivateNotification(hcan, FDCAN_IT_RX_FIFO0_NEW_MESSAGE
-                                 | FDCAN_IT_LIST_BIT_LINE_ERROR
-                                 | FDCAN_IT_LIST_PROTOCOL_ERROR, 0);
+  HAL_FDCAN_ActivateNotification(hcan, FDCAN_IT_RX_FIFO0_NEW_MESSAGE |
+                                       FDCAN_IT_ERROR_PASSIVE |
+                                       FDCAN_IT_ERROR_LOGGING_OVERFLOW |
+                                       FDCAN_IT_RESERVED_ADDRESS_ACCESS |
+                                       FDCAN_IT_DATA_PROTOCOL_ERROR |
+                                       FDCAN_IT_ARB_PROTOCOL_ERROR |
+                                       FDCAN_IT_RAM_WATCHDOG |
+                                       FDCAN_IT_BUS_OFF |
+                                       FDCAN_IT_ERROR_WARNING, 0);
 #endif
   board_on_can_enable_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan));
 }
@@ -253,10 +272,15 @@ void can_disable(CAN_HANDLE_TYPEDEF *hcan)
 #elif defined(FDCAN1)
   //Stop can using HAL
   HAL_FDCAN_Stop(hcan);
-  HAL_FDCAN_DeactivateNotification(hcan, FDCAN_IT_RX_FIFO0_NEW_MESSAGE
-                                   | FDCAN_IT_LIST_BIT_LINE_ERROR
-                                   | FDCAN_IT_LIST_PROTOCOL_ERROR);
-
+  HAL_FDCAN_DeactivateNotification(hcan, FDCAN_IT_RX_FIFO0_NEW_MESSAGE |
+                                       FDCAN_IT_ERROR_PASSIVE |
+                                       FDCAN_IT_ERROR_LOGGING_OVERFLOW |
+                                       FDCAN_IT_RESERVED_ADDRESS_ACCESS |
+                                       FDCAN_IT_DATA_PROTOCOL_ERROR |
+                                       FDCAN_IT_ARB_PROTOCOL_ERROR |
+                                       FDCAN_IT_RAM_WATCHDOG |
+                                       FDCAN_IT_BUS_OFF |
+                                       FDCAN_IT_ERROR_WARNING);
 #endif
   board_on_can_disable_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan));
 }
