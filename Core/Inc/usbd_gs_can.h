@@ -49,7 +49,7 @@ extern "C" {
 #define DFU_INTERFACE_STR_INDEX     0xE0
 
 /* Create a compile time define to reduce RAM use for non-CANFD codebases */
-#if defined(FDCAN1)
+#if defined(CANFD_SUPPORT)
 #define GS_HOST_FRAME gs_host_frame
 #define GS_HOST_FRAME_CLASSIC_CAN gs_host_frame_classic_can
 #else
@@ -69,7 +69,7 @@ extern USBD_ClassTypeDef USBD_GS_CAN;
 
 /* Exported types ------------------------------------------------------------*/
 typedef struct {
-  uint8_t ep0_buf[128]; /* TODO: There is a memory overrun if set to 64 - need to find it - no overrun with 128 */
+  uint8_t ep0_buf[CAN_CMD_PACKET_SIZE];
   __IO uint32_t TxState;
   USBD_SetupReqTypedef last_setup_request;
   struct gs_host_frame from_host_frame;
