@@ -47,6 +47,10 @@
 #define TASK_MAIN_STACK_SIZE (configMINIMAL_STACK_SIZE)
 #define TASK_MAIN_STACK_PRIORITY (tskIDLE_PRIORITY + 2)
 
+#if !defined(BOARD_TIM2_PRESCALER)
+  #define BOARD_TIM2_PRESCALER    0U
+#endif
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -170,7 +174,7 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 0;
+  htim2.Init.Prescaler = BOARD_TIM2_PRESCALER;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim2.Init.Period = 4294967295;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -191,7 +195,7 @@ static void MX_TIM2_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM2_Init 2 */
-
+  HAL_TIM_Base_Start(&htim2);
   /* USER CODE END TIM2_Init 2 */
 
 }
