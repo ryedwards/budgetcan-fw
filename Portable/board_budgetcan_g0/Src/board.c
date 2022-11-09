@@ -50,6 +50,8 @@ UART_HandleTypeDef huart1;
 
 static TaskHandle_t xCreatedLINTask;
 
+static void task_lin(void *argument);
+
 /**
   * @brief System Clock Configuration
   * @retval None
@@ -204,7 +206,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
  *  @param None
  *  @retval None
  */
-void task_lin(void *argument)
+static void task_lin(void *argument)
 {
   UNUSED(argument);
   /* Infinite loop */

@@ -58,11 +58,17 @@ extern "C" {
 #define CAN_NUM_CHANNELS  2
 #define CAN_CLOCK_SPEED   40000000
 
+#define BOARD_TIM2_PRESCALER      64-1
+
 #define QUEUE_SIZE_HOST_TO_DEV    32
 #define QUEUE_SIZE_DEV_TO_HOST    32
 
+#define USER_BTN_K1_Pin GPIO_PIN_3
+#define USER_BTN_K1_GPIO_Port GPIOE
 #define LED1_Pin GPIO_PIN_1
 #define LED1_GPIO_Port GPIOA
+#define USER_BTN_K2_Pin GPIO_PIN_5
+#define USER_BTN_K2_GPIO_Port GPIOC
 
 void SystemClock_Config(void);
 void MX_GPIO_Init(void);

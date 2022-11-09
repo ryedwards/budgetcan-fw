@@ -27,9 +27,13 @@ THE SOFTWARE.
 /* Includes ------------------------------------------------------------------*/
 #include "board.h"
 #include "FreeRTOS.h"
+#include "queue.h"
 #include "task.h"
 #include "can.h"
 #include "led.h"
+
+#define TASK_MY_PROGRAM_STACK_SIZE (512 / sizeof(portSTACK_TYPE))
+#define TASK_MY_PROGRAM_PRIORITY (tskIDLE_PRIORITY + 3)
 
 extern void main_usbd_gs_can_set_channel_cb(USBD_HandleTypeDef *hUSB);
 
@@ -37,6 +41,14 @@ LED_HandleTypeDef hled1;
 
 FDCAN_HandleTypeDef hfdcan1;
 FDCAN_HandleTypeDef hfdcan2;
+
+extern TIM_HandleTypeDef htim2;
+extern QueueHandle_t queue_to_hostHandle;
+
+static TaskHandle_t xCreatedMyProgramTask;
+static bool host_channel_is_active;
+
+static void task_my_program(void *argument);
 
 /**
   * @brief System Clock Configuration
@@ -102,15 +114,23 @@ void SystemClock_Config(void)
 */
 void MX_GPIO_Init(void)
 {
- GPIO_InitTypeDef GPIO_InitStruct = {0};
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : USER_BTN_K1_Pin */
+  GPIO_InitStruct.Pin = USER_BTN_K1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(USER_BTN_K1_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LED1_Pin */
   GPIO_InitStruct.Pin = LED1_Pin;
@@ -118,71 +138,98 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED1_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : USER_BTN_K2_Pin */
+  GPIO_InitStruct.Pin = USER_BTN_K2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(USER_BTN_K2_GPIO_Port, &GPIO_InitStruct);
 }
 
-/** @brief Function to init any features specific to this board
- *  @param None
- *  @retval None
- */
+static void task_my_program(void *argument)
+{
+  UNUSED(argument);
+  
+  uint8_t prev_pressed_state = GPIO_PIN_SET;
+
+  /* Infinite loop */
+  for(;;) {
+    /* if GPIO is pressed then send*/
+    if (HAL_GPIO_ReadPin(USER_BTN_K1_GPIO_Port, USER_BTN_K1_Pin) == GPIO_PIN_RESET && prev_pressed_state != GPIO_PIN_RESET) {
+      prev_pressed_state = GPIO_PIN_RESET;
+      struct GS_HOST_FRAME frame = {0};
+      frame.can_dlc = 8;
+      //frame.can_id = 0x123;
+      frame.can_id  = CAN_ERR_FLAG;
+      frame.channel = 0;
+      frame.echo_id = 0xFFFFFFFF;
+      frame.flags = 0;
+      frame.classic_can.data[0] = 0x11;
+      frame.classic_can.data[1] = 0x22;
+      frame.classic_can.data[2] = 0x34;
+      frame.classic_can.data[3] = 0x44;
+      frame.classic_can.data[4] = 0x55;
+      frame.classic_can.data[5] = 0x66;
+      frame.classic_can.data[6] = 0x77;
+      frame.classic_can.data[7] = 0x88;
+      frame.timestamp_us = __HAL_TIM_GET_COUNTER(&htim2);
+      if (host_channel_is_active) {
+        xQueueSendToBack(queue_to_hostHandle, &frame, 0);
+      }
+    }
+    
+    if(HAL_GPIO_ReadPin(USER_BTN_K1_GPIO_Port, USER_BTN_K1_Pin) == GPIO_PIN_SET) {
+      prev_pressed_state = GPIO_PIN_SET;
+    }
+
+    vTaskDelay(1);
+  }
+}
+
 void main_init_cb(void)
 {
   can_init(&hfdcan1, FDCAN1);
   can_init(&hfdcan2, FDCAN2);
   led_init(&hled1, LED1_GPIO_Port, LED1_Pin, LED_MODE_INACTIVE, LED_ACTIVE_LOW);
+  host_channel_is_active = false;
 }
 
-/** @brief Function to assign the CAN HW pointers to the channel index in the USB handle
- *  @param USBD_HandleTypeDef *hUSB - The handle for the USB where will will set up the CAN pointer
- *  @retval None
- */
+void main_rtos_init_cb(void)
+{
+  xTaskCreate(task_my_program, "MyProgTask", TASK_MY_PROGRAM_STACK_SIZE, NULL,
+              TASK_MY_PROGRAM_PRIORITY, &xCreatedMyProgramTask);  
+}
+
 void main_usbd_gs_can_set_channel_cb(USBD_HandleTypeDef *hUSB)
 {
   USBD_GS_CAN_SetChannel(hUSB, 0, &hfdcan1);
   USBD_GS_CAN_SetChannel(hUSB, 1, &hfdcan2);
 }
 
-/** @brief Function to periodically update any features on the board from the main task
- *  @param None
- *  @retval None
- */
 void main_task_cb(void)
 {
   /* update all the LEDs */
  led_update(&hled1);
 }
 
-/** @brief Function called when the CAN is enabled for this channel
- *  @param uint8_t channel - The CAN channel (0 based)
- *  @retval None
- */
 void can_on_enable_cb(uint8_t channel)
 {
   led_set_active(&hled1);
+  host_channel_is_active = true;
 }
 
-/** @brief Function called when the CAN is disabled for this channel
- *  @param uint8_t channel - The CAN channel (0 based)
- *  @retval None
- */
 void can_on_disable_cb(uint8_t channel)
 {
   led_set_inactive(&hled1);
+  host_channel_is_active = false;
 }
 
-/** @brief Function called when a CAN frame is send on this channel
- *  @param uint8_t channel - The CAN channel (0 based)
- *  @retval None
- */
 void can_on_tx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
 {
   UNUSED(frame);
   led_indicate_rxtx(&hled1);
 }
 
-/** @brief Function called when a CAN frame is received on this channel
- *  @param uint8_t channel - The CAN channel (0 based)
- *  @retval None
- */
 void can_on_rx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
 {
   UNUSED(frame);
