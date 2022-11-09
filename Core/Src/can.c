@@ -78,7 +78,7 @@ void can_init(CAN_HANDLE_TYPEDEF *hcan, CAN_TYPEDEF *instance)
   HAL_CAN_Init(hcan);
 
 #elif defined(FDCAN1)
-  hcan->Instance = instance;  
+  hcan->Instance = instance;
   hcan->Init.FrameFormat = FDCAN_FRAME_FD_BRS;
   hcan->Init.Mode = FDCAN_MODE_NORMAL;
   hcan->Init.AutoRetransmission = DISABLE;
@@ -317,7 +317,7 @@ bool can_send(CAN_HANDLE_TYPEDEF *hcan, struct GS_HOST_FRAME *frame)
     return false;
   }
   else {
-    can_on_tx_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan));
+    can_on_tx_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan), frame);
     return true;
   }
 #elif defined(FDCAN1)
@@ -364,7 +364,7 @@ bool can_send(CAN_HANDLE_TYPEDEF *hcan, struct GS_HOST_FRAME *frame)
     return false;
   }
   else {
-    can_on_tx_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan));
+    can_on_tx_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan), frame);
     return true;
   }
 #endif
@@ -431,7 +431,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
    /* put this CAN message into the queue to send to host */
    xQueueSendToBackFromISR(queue_to_hostHandle, &frame, NULL);
 
-   can_on_rx_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan));
+   can_on_rx_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan), &frame);
 }
 #elif defined(FDCAN1)
 void HAL_FDCAN_RxFifo0Callback(CAN_HANDLE_TYPEDEF *hcan, uint32_t RxFifo0ITs) 
@@ -477,7 +477,7 @@ void HAL_FDCAN_RxFifo0Callback(CAN_HANDLE_TYPEDEF *hcan, uint32_t RxFifo0ITs)
   /* put this CAN message into the queue to send to host */
   xQueueSendToBackFromISR(queue_to_hostHandle, &frame, NULL);
 
-  can_on_rx_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan));
+  can_on_rx_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan), &frame);
 }
 #endif
 
@@ -667,13 +667,20 @@ __weak void can_on_disable_cb(uint8_t channel)
 {
   UNUSED(channel);
 }
-__weak void can_on_tx_cb(uint8_t channel)
+__weak void can_on_tx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
 {
   UNUSED(channel);
+  UNUSED(frame);
 }
-__weak void can_on_rx_cb(uint8_t channel)
+__weak void can_on_rx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
 {
   UNUSED(channel);
+  UNUSED(frame);
+}
+
+__weak void can_identify_cb(uint32_t do_identify)
+{
+  UNUSED(do_identify);
 }
 __weak void can_set_term_cb(uint8_t channel, GPIO_PinState state)
 {

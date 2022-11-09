@@ -399,6 +399,7 @@ static uint8_t USBD_GS_CAN_EP0_RxReady(USBD_HandleTypeDef *pdev) {
         ch = hcan->channels[req->wValue];
         // Blink an LED sequence
       }
+      can_identify_cb(param_u32);
       break;
 
     case GS_USB_BREQ_SET_TERMINATION:

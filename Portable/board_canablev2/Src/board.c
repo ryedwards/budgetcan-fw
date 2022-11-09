@@ -136,9 +136,10 @@ void main_task_cb(void)
  *  @param uint8_t channel - The CAN channel (0 based)
  *  @retval None
  */
-void can_on_tx_cb(uint8_t channel)
+void can_on_tx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
 {
   UNUSED(channel);
+  UNUSED(frame);
   led_indicate_rxtx(&hled1);
 }
 
@@ -146,28 +147,9 @@ void can_on_tx_cb(uint8_t channel)
  *  @param uint8_t channel - The CAN channel (0 based)
  *  @retval None
  */
-void can_on_rx_cb(uint8_t channel)
+void can_on_rx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
 {
   UNUSED(channel);
+  UNUSED(frame);
   led_indicate_rxtx(&hled1);
-}
-
-/** @brief Function called to set the CAN termination resistor ON of OFF
- *  @param uint8_t channel - The CAN channel (0 based)
- *  @param GPIO_PinState state - The requested state of the pin
- *  @retval None
- */
-void can_set_term_cb(uint8_t channel, GPIO_PinState state)
-{
-  UNUSED(channel);
-}
-
-/** @brief Function called to get the state of the CAN termination resistor
- *  @param uint8_t channel - The CAN channel (0 based)
- *  @retval The current state of the CAN termination pin
- */
-GPIO_PinState can_get_term_cb(uint8_t channel)
-{
-  UNUSED(channel);
-  return 0;
 }
