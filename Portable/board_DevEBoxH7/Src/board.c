@@ -159,8 +159,7 @@ static void task_my_program(void *argument)
       prev_pressed_state = GPIO_PIN_RESET;
       struct GS_HOST_FRAME frame = {0};
       frame.can_dlc = 8;
-      //frame.can_id = 0x123;
-      frame.can_id  = CAN_ERR_FLAG;
+      frame.can_id = 0x123;
       frame.channel = 0;
       frame.echo_id = 0xFFFFFFFF;
       frame.flags = 0;
