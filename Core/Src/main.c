@@ -124,13 +124,17 @@ int main(void)
   main_usbd_gs_can_set_channel_cb(&hUSB);
   USBD_Start(&hUSB);
 
+    /* Init the RTOS tasks */
+  main_rtos_init_cb();
+
+  xTaskCreate(task_main, "Main Task", TASK_MAIN_STACK_SIZE, NULL,
+              TASK_MAIN_STACK_PRIORITY, &xCreatedMainTask);
+
   /* Init the RTOS streams and queues */
   queue_from_hostHandle = xQueueCreate(QUEUE_SIZE_HOST_TO_DEV, sizeof(struct GS_HOST_FRAME));
   queue_to_hostHandle = xQueueCreate(QUEUE_SIZE_DEV_TO_HOST, sizeof(struct GS_HOST_FRAME));
 
-  /* Init the RTOS tasks */
-  xTaskCreate(task_main, "Main Task", TASK_MAIN_STACK_SIZE, NULL,
-              TASK_MAIN_STACK_PRIORITY, &xCreatedMainTask);
+
 
   /* Start scheduler */
   vTaskStartScheduler();
@@ -279,13 +283,33 @@ void dfu_run_bootloader(void)
 }
 
 /* weak function calls to allow callbacks to be optionally included */
+
+/** @brief Callback function called during main init
+ *  @param None
+ *  @retval None
+ */
 __weak void main_init_cb(void)
 {
 }
+/** @brief Callback function called during main rtos init
+ *  @param None
+ *  @retval None
+ */
+__weak void main_rtos_init_cb(void)
+{
+}
+/** @brief Callback function called during USB init after the hUSB handle is configured
+ *  @param USBD_HandleTypeDef *hUSB - handle to the hUSB structure
+ *  @retval None
+ */
 __weak void main_usbd_gs_can_set_channel_cb(USBD_HandleTypeDef *hUSB)
 {
   UNUSED(hUSB);
 }
+/** @brief Callback function called periodically during the main task
+ *  @param None
+ *  @retval None
+ */
 __weak void main_task_cb(void)
 {
 }

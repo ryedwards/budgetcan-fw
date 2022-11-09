@@ -54,6 +54,7 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 void main_init_cb(void);
+void main_rtos_init_cb(void);
 void main_task_cb(void);
 /* USER CODE END EFP */
 

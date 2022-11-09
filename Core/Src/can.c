@@ -659,34 +659,67 @@ bool can_parse_error_status(uint32_t err, uint32_t last_err, CAN_HANDLE_TYPEDEF 
 }
 
 /* weak function calls to allow callbacks to be optionally included */
+/** @brief Callback function called when the CAN channel is enabled
+ *  @param uint8_t channel - CAN channel that was acted upon
+ *  @retval None
+ */
 __weak void can_on_enable_cb(uint8_t channel)
 {
   UNUSED(channel);
 }
+/** @brief Callback function called when the CAN channel is disabled
+ *  @param uint8_t channel - CAN channel that was acted upon
+ *  @retval None
+ */
 __weak void can_on_disable_cb(uint8_t channel)
 {
   UNUSED(channel);
 }
+/** @brief Callback function called when a message is succefully 
+ *         transmitted on the CAN bus
+ *  @param uint8_t channel - CAN channel that was acted upon
+ *  @param struct GS_HOST_FRAME *frame - data that was sent on the bus
+ *  @retval None
+ */
 __weak void can_on_tx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
 {
   UNUSED(channel);
   UNUSED(frame);
 }
+/** @brief Callback function called when a message is succefully 
+ *         received on the CAN bus
+ *  @param uint8_t channel - CAN channel that was acted upon
+ *  @param struct GS_HOST_FRAME *frame - data that was received on the bus
+ *  @retval None
+ */
 __weak void can_on_rx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
 {
   UNUSED(channel);
   UNUSED(frame);
 }
-
+/** @brief Callback function called the identify request is made by the host
+ *  @param uint32_t do_identify - 0=identify off, 1=identify on
+ *  @retval None
+ */
 __weak void can_identify_cb(uint32_t do_identify)
 {
   UNUSED(do_identify);
 }
+/** @brief Callback function called to set the state of the 
+ *         CAN termination resistor
+ *  @param uint8_t channel - CAN channel to act upon
+ *  @param GPIO_PinState state - requested state of the pin
+ *  @retval None
+ */
 __weak void can_set_term_cb(uint8_t channel, GPIO_PinState state)
 {
   UNUSED(channel);
   UNUSED(state);
 }
+/** @brief Callback function called to get the state of the 
+ *         CAN termination resistor
+ *  @retval GPIO_PinState state - current state of the pin
+ */
 __weak GPIO_PinState can_get_term_cb(uint8_t channel)
 {
   UNUSED(channel);
