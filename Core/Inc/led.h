@@ -52,19 +52,23 @@ typedef struct {
   uint16_t GPIO_Pin;
   GPIO_PinState initial_state;
   led_mode_t led_mode;
+  led_mode_t prev_led_mode;
   uint8_t led_active_level;
   uint32_t led_rxtx_timeout_tick;
   uint32_t blink_period_ms;
+  uint32_t prev_blink_period_ms;
   uint32_t blink_toggle_timeout_tick;
 } LED_HandleTypeDef;
 
 /* Exported functions --------------------------------------------------------*/
 void led_init(LED_HandleTypeDef* hled, GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, led_mode_t led_mode, uint8_t led_active_level);
 void led_update(LED_HandleTypeDef* hled);
+led_mode_t led_get_mode(LED_HandleTypeDef* hled);
 void led_set_active(LED_HandleTypeDef* hled);
 void led_set_inactive(LED_HandleTypeDef* hled);
 void led_indicate_rxtx(LED_HandleTypeDef* hled);
 void led_blink(LED_HandleTypeDef* hled, uint32_t period_ms);
+void led_restore_prev_mode(LED_HandleTypeDef* hled);
 
 #ifdef __cplusplus
 }

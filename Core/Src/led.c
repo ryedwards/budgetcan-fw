@@ -41,6 +41,7 @@ void led_init(LED_HandleTypeDef* hled, GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, l
   hled->GPIOx = GPIOx;
   hled->GPIO_Pin = GPIO_Pin;
   hled->led_mode = led_mode;
+  hled->prev_led_mode = led_mode;
   hled->led_active_level = led_active_level;
   /* start with the LED inactive at init */
   HAL_GPIO_WritePin(hled->GPIOx, hled->GPIO_Pin, !led_active_level);
@@ -88,6 +89,15 @@ void led_update(LED_HandleTypeDef* hled)
   }
 }
 
+/** @brief Function to read the LED current mode
+ *  @param LED_HandleTypeDef* hled - The pointer to the handle.
+ *  @retval led_mode_t - the enumeratred led mode
+ */
+led_mode_t led_get_mode(LED_HandleTypeDef* hled)
+{
+  return hled->led_mode;
+}
+
 /** @brief Function to set the LED into it's active mode
  *  @param LED_HandleTypeDef* hled - The pointer to the handle.
  *  @retval None
@@ -95,6 +105,7 @@ void led_update(LED_HandleTypeDef* hled)
 void led_set_active(LED_HandleTypeDef* hled)
 {
   /* set the mode flag - the handler will update the GPIO */
+  hled->prev_led_mode = hled->led_mode;
   hled->led_mode = LED_MODE_ACTIVE;
 }
 
@@ -105,6 +116,7 @@ void led_set_active(LED_HandleTypeDef* hled)
 void led_set_inactive(LED_HandleTypeDef* hled)
 {
   /* set the mode flag - the handler will update the GPIO */
+  hled->prev_led_mode = hled->led_mode;
   hled->led_mode = LED_MODE_INACTIVE;
 }
 
@@ -118,6 +130,7 @@ void led_indicate_rxtx(LED_HandleTypeDef* hled)
   if ((hled->led_mode != LED_MODE_RXTX_ACTIVE)  && (hled->led_mode != LED_MODE_RXTX_HOLDOFF)) {
     /* turn on the LED for a brief period of time to indicate a message was sent */
     HAL_GPIO_WritePin(hled->GPIOx, hled->GPIO_Pin, hled->led_active_level);
+    hled->prev_led_mode = hled->led_mode;
     hled->led_mode = LED_MODE_RXTX_ACTIVE;
     hled->led_rxtx_timeout_tick = HAL_GetTick() + LED_RXTX_ACTIVE_TIME_MS;
   }
@@ -130,8 +143,20 @@ void led_indicate_rxtx(LED_HandleTypeDef* hled)
  */
 void led_blink(LED_HandleTypeDef* hled, uint32_t period_ms)
 {
+  hled->prev_led_mode = hled->led_mode;
+  hled->prev_blink_period_ms = hled->blink_period_ms;
   hled->blink_period_ms = period_ms;
   hled->led_mode = LED_MODE_BLINK;
   hled->blink_toggle_timeout_tick = HAL_GetTick() + (hled->blink_period_ms/2);
+}
+
+/** @brief Function to restore the previous LED mode
+ *  @param LED_HandleTypeDef* hled - The pointer to the handle.
+ *  @retval None
+ */
+void led_restore_prev_mode(LED_HandleTypeDef* hled)
+{
+  hled->led_mode = hled->prev_led_mode;
+  hled->blink_period_ms = hled->prev_blink_period_ms;
 }
 
