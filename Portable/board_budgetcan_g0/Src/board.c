@@ -35,6 +35,8 @@ THE SOFTWARE.
 #define TASK_LIN_STACK_SIZE (512 / sizeof(portSTACK_TYPE))
 #define TASK_LIN_STACK_PRIORITY (tskIDLE_PRIORITY + 1)
 
+extern void main_usbd_gs_can_set_channel_cb(USBD_HandleTypeDef *hUSB);
+
 LED_HandleTypeDef hled1;
 LED_HandleTypeDef hled2;
 LED_HandleTypeDef hled3;
@@ -218,43 +220,27 @@ void task_lin(void *argument)
  *  @param None
  *  @retval None
  */
-void board_init(void)
+void main_init_cb(void)
 {
-  MX_USART1_UART_Init();
-  board_lin_init();
+  can_init(&hfdcan1, FDCAN1);
+  can_init(&hfdcan2, FDCAN2);
+
   led_init(&hled1, LED1_GPIO_Port, LED1_Pin, LED_MODE_INACTIVE, LED_ACTIVE_HIGH);
   led_init(&hled2, LED2_GPIO_Port, LED2_Pin, LED_MODE_INACTIVE, LED_ACTIVE_HIGH);
   led_init(&hled3, LED3_GPIO_Port, LED3_Pin, LED_MODE_INACTIVE, LED_ACTIVE_HIGH);
 
-  xTaskCreate(task_lin, "LIN Task", TASK_LIN_STACK_SIZE, NULL,
-                TASK_LIN_STACK_PRIORITY, &xCreatedLINTask);
-}
-
-/** @brief Function to init all of the CAN channels this board supports
- *  @param None
- *  @retval None
- */
-void board_can_init(void)
-{
-  can_init(&hfdcan1, FDCAN1);
-  can_init(&hfdcan2, FDCAN2);
-}
-
-/** @brief Function to init all of the LIN channels this board supports
- *  @param None
- *  @retval None
- */
-void board_lin_init(void)
-{
+  MX_USART1_UART_Init();
   lin_init(&hlin1, LIN1_CHANNEL, &huart1);
   HAL_GPIO_WritePin(LIN1_NSLP_GPIO_Port, LIN1_NSLP_Pin, GPIO_PIN_SET);
+  xTaskCreate(task_lin, "LIN Task", TASK_LIN_STACK_SIZE, NULL,
+                TASK_LIN_STACK_PRIORITY, &xCreatedLINTask);
 }
 
 /** @brief Function to assign the CAN HW pointers to the channel index in the USB handle
  *  @param USBD_HandleTypeDef *hUSB - The handle for the USB where will will set up the CAN pointer
  *  @retval None
  */
-void board_usbd_gs_can_set_channel(USBD_HandleTypeDef *hUSB)
+void main_usbd_gs_can_set_channel_cb(USBD_HandleTypeDef *hUSB)
 {
   USBD_GS_CAN_SetChannel(hUSB, 0, &hfdcan1);
   USBD_GS_CAN_SetChannel(hUSB, 1, &hfdcan2);
@@ -264,19 +250,19 @@ void board_usbd_gs_can_set_channel(USBD_HandleTypeDef *hUSB)
  *  @param None
  *  @retval None
  */
-void board_main_task_cb(void)
+void main_task_cb(void)
 {
   /* update all the LEDs */
- led_update(&hled1);
- led_update(&hled2);
- led_update(&hled3);
+  led_update(&hled1);
+  led_update(&hled2);
+  led_update(&hled3);
 }
 
 /** @brief Function called when the CAN is enabled for this channel
  *  @param uint8_t channel - The CAN channel (0 based)
  *  @retval None
  */
-void board_on_can_enable_cb(uint8_t channel)
+void can_on_enable_cb(uint8_t channel)
 {
   if (channel == 0) {
     HAL_GPIO_WritePin(FDCAN1_SLEEP_EN_GPIO_Port, FDCAN1_SLEEP_EN_Pin, GPIO_PIN_RESET);
@@ -293,7 +279,7 @@ void board_on_can_enable_cb(uint8_t channel)
  *  @param uint8_t channel - The CAN channel (0 based)
  *  @retval None
  */
-void board_on_can_disable_cb(uint8_t channel)
+void can_on_disable_cb(uint8_t channel)
 {
   if (channel == 0) {
     HAL_GPIO_WritePin(FDCAN1_SLEEP_EN_GPIO_Port, FDCAN1_SLEEP_EN_Pin, GPIO_PIN_SET);
@@ -310,7 +296,7 @@ void board_on_can_disable_cb(uint8_t channel)
  *  @param uint8_t channel - The CAN channel (0 based)
  *  @retval None
  */
-void board_on_can_tx_cb(uint8_t channel)
+void can_on_tx_cb(uint8_t channel)
 {
   led_indicate_rxtx(&hled1);
 }
@@ -319,7 +305,7 @@ void board_on_can_tx_cb(uint8_t channel)
  *  @param uint8_t channel - The CAN channel (0 based)
  *  @retval None
  */
-void board_on_can_rx_cb(uint8_t channel)
+void can_on_rx_cb(uint8_t channel)
 {
   led_indicate_rxtx(&hled2);
 }
@@ -329,7 +315,7 @@ void board_on_can_rx_cb(uint8_t channel)
  *  @param GPIO_PinState state - The requested state of the pin
  *  @retval None
  */
-void board_set_can_term(uint8_t channel, GPIO_PinState state)
+void can_set_term_cb(uint8_t channel, GPIO_PinState state)
 {
   if (channel == 0) {
     HAL_GPIO_WritePin(FDCAN1_TERM_EN_GPIO_Port, FDCAN1_TERM_EN_Pin, state);
@@ -343,7 +329,7 @@ void board_set_can_term(uint8_t channel, GPIO_PinState state)
  *  @param uint8_t channel - The CAN channel (0 based)
  *  @retval The current state of the CAN termination pin
  */
-GPIO_PinState board_get_can_term(uint8_t channel)
+GPIO_PinState can_get_term_cb(uint8_t channel)
 {
   if (channel == 0) {
     return HAL_GPIO_ReadPin(FDCAN1_TERM_EN_GPIO_Port, FDCAN1_TERM_EN_Pin);

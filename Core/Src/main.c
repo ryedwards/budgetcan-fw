@@ -74,6 +74,7 @@ static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 static void task_main(void *argument);
 static void dfu_run_bootloader(void);
+void main_usbd_gs_can_set_channel_cb(USBD_HandleTypeDef *hUSB);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -113,16 +114,14 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   /* Function to allow the board to init any features */
-  board_init();
-  /* Initialize the CAN control for the defined board */
-  board_can_init();
+  main_init_cb();
 
   USBD_Init(&hUSB, (USBD_DescriptorsTypeDef*)&FS_Desc, DEVICE_FS);
   USBD_RegisterClass(&hUSB, &USBD_GS_CAN);
 
   USBD_GS_CAN_Init(&hUSB);
   /* Assigns the channel to the gs_usb handler for all defined CAN channels */
-  board_usbd_gs_can_set_channel(&hUSB);
+  main_usbd_gs_can_set_channel_cb(&hUSB);
   USBD_Start(&hUSB);
 
   /* Init the RTOS streams and queues */
@@ -246,7 +245,7 @@ void task_main(void *argument)
     }
 
     /* callback function to the board to allow main task routines */
-    board_main_task_cb();
+    main_task_cb();
 
     vTaskDelay(1);
   }
@@ -277,6 +276,18 @@ void dfu_run_bootloader(void)
 {
   dfu_reset_to_bootloader_magic = RESET_TO_BOOTLOADER_MAGIC_CODE;
   NVIC_SystemReset();
+}
+
+/* weak function calls to allow callbacks to be optionally included */
+__weak void main_init_cb(void)
+{
+}
+__weak void main_usbd_gs_can_set_channel_cb(USBD_HandleTypeDef *hUSB)
+{
+  UNUSED(hUSB);
+}
+__weak void main_task_cb(void)
+{
 }
 
 /* USER CODE END 4 */

@@ -50,6 +50,13 @@ bool can_send(CAN_HANDLE_TYPEDEF *hcan, struct GS_HOST_FRAME *frame);
 void can_set_termination(uint8_t channel, uint8_t value);
 uint8_t can_get_termination(uint8_t channel);
 
+void can_on_enable_cb(uint8_t channel);
+void can_on_disable_cb(uint8_t channel);
+void can_on_tx_cb(uint8_t channel);
+void can_on_rx_cb(uint8_t channel);
+void can_set_term_cb(uint8_t channel, GPIO_PinState state);
+GPIO_PinState can_get_term_cb(uint8_t channel);
+
 #ifdef __cplusplus
 }
 #endif

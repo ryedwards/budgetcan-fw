@@ -31,6 +31,8 @@ THE SOFTWARE.
 #include "can.h"
 #include "led.h"
 
+extern void main_usbd_gs_can_set_channel_cb(USBD_HandleTypeDef *hUSB);
+
 LED_HandleTypeDef hled1;
 
 FDCAN_HandleTypeDef hfdcan1;
@@ -122,26 +124,18 @@ void MX_GPIO_Init(void)
  *  @param None
  *  @retval None
  */
-void board_init(void)
-{
-  led_init(&hled1, LED1_GPIO_Port, LED1_Pin, LED_MODE_INACTIVE, LED_ACTIVE_LOW);
-}
-
-/** @brief Function to init all of the CAN channels this board supports
- *  @param None
- *  @retval None
- */
-void board_can_init(void)
+void main_init_cb(void)
 {
   can_init(&hfdcan1, FDCAN1);
   can_init(&hfdcan2, FDCAN2);
+  led_init(&hled1, LED1_GPIO_Port, LED1_Pin, LED_MODE_INACTIVE, LED_ACTIVE_LOW);
 }
 
 /** @brief Function to assign the CAN HW pointers to the channel index in the USB handle
  *  @param USBD_HandleTypeDef *hUSB - The handle for the USB where will will set up the CAN pointer
  *  @retval None
  */
-void board_usbd_gs_can_set_channel(USBD_HandleTypeDef *hUSB)
+void main_usbd_gs_can_set_channel_cb(USBD_HandleTypeDef *hUSB)
 {
   USBD_GS_CAN_SetChannel(hUSB, 0, &hfdcan1);
   USBD_GS_CAN_SetChannel(hUSB, 1, &hfdcan2);
@@ -151,7 +145,7 @@ void board_usbd_gs_can_set_channel(USBD_HandleTypeDef *hUSB)
  *  @param None
  *  @retval None
  */
-void board_main_task_cb(void)
+void main_task_cb(void)
 {
   /* update all the LEDs */
  led_update(&hled1);
@@ -161,7 +155,7 @@ void board_main_task_cb(void)
  *  @param uint8_t channel - The CAN channel (0 based)
  *  @retval None
  */
-void board_on_can_enable_cb(uint8_t channel)
+void can_on_enable_cb(uint8_t channel)
 {
   led_set_active(&hled1);
 }
@@ -170,7 +164,7 @@ void board_on_can_enable_cb(uint8_t channel)
  *  @param uint8_t channel - The CAN channel (0 based)
  *  @retval None
  */
-void board_on_can_disable_cb(uint8_t channel)
+void can_on_disable_cb(uint8_t channel)
 {
   led_set_inactive(&hled1);
 }
@@ -179,7 +173,7 @@ void board_on_can_disable_cb(uint8_t channel)
  *  @param uint8_t channel - The CAN channel (0 based)
  *  @retval None
  */
-void board_on_can_tx_cb(uint8_t channel)
+void can_on_tx_cb(uint8_t channel)
 {
   led_indicate_rxtx(&hled1);
 }
@@ -188,26 +182,7 @@ void board_on_can_tx_cb(uint8_t channel)
  *  @param uint8_t channel - The CAN channel (0 based)
  *  @retval None
  */
-void board_on_can_rx_cb(uint8_t channel)
+void can_on_rx_cb(uint8_t channel)
 {
   led_indicate_rxtx(&hled1);
 }
-
-/** @brief Function called to set the CAN termination resistor ON of OFF
- *  @param uint8_t channel - The CAN channel (0 based)
- *  @param GPIO_PinState state - The requested state of the pin
- *  @retval None
- */
-void board_set_can_term(uint8_t channel, GPIO_PinState state)
-{
-}
-
-/** @brief Function called to get the state of the CAN termination resistor
- *  @param uint8_t channel - The CAN channel (0 based)
- *  @retval The current state of the CAN termination pin
- */
-GPIO_PinState board_get_can_term(uint8_t channel)
-{
-  return 0;
-}
-

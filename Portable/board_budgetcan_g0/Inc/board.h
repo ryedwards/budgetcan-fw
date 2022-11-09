@@ -98,19 +98,6 @@ extern "C" {
 void SystemClock_Config(void);
 void MX_GPIO_Init(void);
 
-void board_init(void);
-void board_can_init(void);
-void board_lin_init(void);
-void board_usbd_gs_can_set_channel(USBD_HandleTypeDef *hUSB);
-void board_main_task_cb(void);
-
-void board_on_can_enable_cb(uint8_t channel);
-void board_on_can_disable_cb(uint8_t channel);
-void board_on_can_tx_cb(uint8_t channel);
-void board_on_can_rx_cb(uint8_t channel);
-void board_set_can_term(uint8_t channel, GPIO_PinState state);
-GPIO_PinState board_get_can_term(uint8_t channel);
-
 #ifdef __cplusplus
 }
 #endif

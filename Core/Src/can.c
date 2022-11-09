@@ -252,7 +252,7 @@ void can_enable(CAN_HANDLE_TYPEDEF *hcan, bool loop_back, bool listen_only, bool
                                        FDCAN_IT_BUS_OFF |
                                        FDCAN_IT_ERROR_WARNING, 0);
 #endif
-  board_on_can_enable_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan));
+  can_on_enable_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan));
 }
 
 /** @brief Function to isable the CAN channel
@@ -282,7 +282,7 @@ void can_disable(CAN_HANDLE_TYPEDEF *hcan)
                                        FDCAN_IT_BUS_OFF |
                                        FDCAN_IT_ERROR_WARNING);
 #endif
-  board_on_can_disable_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan));
+  can_on_disable_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan));
 }
 
 bool can_is_enabled(CAN_HANDLE_TYPEDEF *hcan)
@@ -317,10 +317,9 @@ bool can_send(CAN_HANDLE_TYPEDEF *hcan, struct GS_HOST_FRAME *frame)
     return false;
   }
   else {
-    board_on_can_tx_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan));
+    can_on_tx_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan));
     return true;
   }
-}
 #elif defined(FDCAN1)
   FDCAN_TxHeaderTypeDef TxHeader;
 
@@ -365,11 +364,11 @@ bool can_send(CAN_HANDLE_TYPEDEF *hcan, struct GS_HOST_FRAME *frame)
     return false;
   }
   else {
-    board_on_can_tx_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan));
+    can_on_tx_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan));
     return true;
   }
-}
 #endif
+}
 /** @brief Set the termination I/O
  *  @param uint8_t channel - CAN channel
  *  @param uint8_t value - 0=Reset, 1=Set
@@ -378,7 +377,7 @@ bool can_send(CAN_HANDLE_TYPEDEF *hcan, struct GS_HOST_FRAME *frame)
 void can_set_termination(uint8_t channel, uint8_t value)
 {
   GPIO_PinState pin_state = value == 0 ? GPIO_PIN_RESET : GPIO_PIN_SET;
-  board_set_can_term(channel, pin_state);
+  can_set_term_cb(channel, pin_state);
 }
 
 /** @brief Set the termination I/O
@@ -388,7 +387,7 @@ void can_set_termination(uint8_t channel, uint8_t value)
  */
 uint8_t can_get_termination(uint8_t channel)
 {
-  return board_get_can_term(channel);
+  return can_get_term_cb(channel);
 }
 
 /**
@@ -432,11 +431,11 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
    /* put this CAN message into the queue to send to host */
    xQueueSendToBackFromISR(queue_to_hostHandle, &frame, NULL);
 
-   board_on_can_rx_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan));
+   can_on_rx_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan));
 }
-
 #elif defined(FDCAN1)
-void HAL_FDCAN_RxFifo0Callback(CAN_HANDLE_TYPEDEF *hcan, uint32_t RxFifo0ITs) {
+void HAL_FDCAN_RxFifo0Callback(CAN_HANDLE_TYPEDEF *hcan, uint32_t RxFifo0ITs) 
+{
   FDCAN_RxHeaderTypeDef RxHeader;
   struct GS_HOST_FRAME frame;
 
@@ -478,7 +477,7 @@ void HAL_FDCAN_RxFifo0Callback(CAN_HANDLE_TYPEDEF *hcan, uint32_t RxFifo0ITs) {
   /* put this CAN message into the queue to send to host */
   xQueueSendToBackFromISR(queue_to_hostHandle, &frame, NULL);
 
-  board_on_can_rx_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan));
+  can_on_rx_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan));
 }
 #endif
 
@@ -657,4 +656,32 @@ bool can_parse_error_status(uint32_t err, uint32_t last_err, CAN_HANDLE_TYPEDEF 
       break;
   }
   return should_send;
+}
+
+/* weak function calls to allow callbacks to be optionally included */
+__weak void can_on_enable_cb(uint8_t channel)
+{
+  UNUSED(channel);
+}
+__weak void can_on_disable_cb(uint8_t channel)
+{
+  UNUSED(channel);
+}
+__weak void can_on_tx_cb(uint8_t channel)
+{
+  UNUSED(channel);
+}
+__weak void can_on_rx_cb(uint8_t channel)
+{
+  UNUSED(channel);
+}
+__weak void can_set_term_cb(uint8_t channel, GPIO_PinState state)
+{
+  UNUSED(channel);
+  UNUSED(state);
+}
+__weak GPIO_PinState can_get_term_cb(uint8_t channel)
+{
+  UNUSED(channel);
+  return 0;
 }
