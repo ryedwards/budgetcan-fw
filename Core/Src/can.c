@@ -436,6 +436,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 #elif defined(FDCAN1)
 void HAL_FDCAN_RxFifo0Callback(CAN_HANDLE_TYPEDEF *hcan, uint32_t RxFifo0ITs) 
 {
+  UNUSED(RxFifo0ITs);
   FDCAN_RxHeaderTypeDef RxHeader;
   struct GS_HOST_FRAME frame;
 
@@ -503,12 +504,13 @@ void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan)
 #elif defined(FDCAN1)
 void HAL_FDCAN_ErrorStatusCallback(CAN_HANDLE_TYPEDEF *hcan, uint32_t ErrorStatusITs)
 {
+  UNUSED(ErrorStatusITs);
   struct GS_HOST_FRAME frame;
-    uint32_t can_err_status = hcan->Instance->PSR;
-    can_parse_error_status(can_err_status, can_last_err_status, hcan, &frame);
-    /* put this CAN message into the queue to send to host */
-    xQueueSendToBackFromISR(queue_to_hostHandle, &frame, NULL);
-    can_last_err_status = can_err_status;
+  uint32_t can_err_status = hcan->Instance->PSR;
+  can_parse_error_status(can_err_status, can_last_err_status, hcan, &frame);
+  /* put this CAN message into the queue to send to host */
+  xQueueSendToBackFromISR(queue_to_hostHandle, &frame, NULL);
+  can_last_err_status = can_err_status;
 }
 #endif
 

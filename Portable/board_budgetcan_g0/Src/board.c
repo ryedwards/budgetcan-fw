@@ -35,14 +35,14 @@ THE SOFTWARE.
 #define TASK_LIN_STACK_SIZE (512 / sizeof(portSTACK_TYPE))
 #define TASK_LIN_STACK_PRIORITY (tskIDLE_PRIORITY + 1)
 
-extern void main_usbd_gs_can_set_channel_cb(USBD_HandleTypeDef *hUSB);
-
 LED_HandleTypeDef hled1;
 LED_HandleTypeDef hled2;
 LED_HandleTypeDef hled3;
 
 FDCAN_HandleTypeDef hfdcan1;
 FDCAN_HandleTypeDef hfdcan2;
+
+extern USBD_GS_CAN_HandleTypeDef hGS_CAN;
 
 LIN_HandleTypeDef hlin1;
 
@@ -218,14 +218,12 @@ static void task_lin(void *argument)
   }
 }
 
-/** @brief Function to init any features specific to this board
- *  @param None
- *  @retval None
- */
 void main_init_cb(void)
 {
-  can_init(&hfdcan1, FDCAN1);
-  can_init(&hfdcan2, FDCAN2);
+  hGS_CAN.channels[0] = &hfdcan1;
+  hGS_CAN.channels[1] = &hfdcan1;
+  can_init(hGS_CAN.channels[0], FDCAN1);
+  can_init(hGS_CAN.channels[1], FDCAN2);
 
   led_init(&hled1, LED1_GPIO_Port, LED1_Pin, LED_MODE_INACTIVE, LED_ACTIVE_HIGH);
   led_init(&hled2, LED2_GPIO_Port, LED2_Pin, LED_MODE_INACTIVE, LED_ACTIVE_HIGH);
@@ -238,20 +236,6 @@ void main_init_cb(void)
                 TASK_LIN_STACK_PRIORITY, &xCreatedLINTask);
 }
 
-/** @brief Function to assign the CAN HW pointers to the channel index in the USB handle
- *  @param USBD_HandleTypeDef *hUSB - The handle for the USB where will will set up the CAN pointer
- *  @retval None
- */
-void main_usbd_gs_can_set_channel_cb(USBD_HandleTypeDef *hUSB)
-{
-  USBD_GS_CAN_SetChannel(hUSB, 0, &hfdcan1);
-  USBD_GS_CAN_SetChannel(hUSB, 1, &hfdcan2);
-}
-
-/** @brief Function to periodically update any features on the board from the main task
- *  @param None
- *  @retval None
- */
 void main_task_cb(void)
 {
   /* update all the LEDs */
@@ -260,10 +244,6 @@ void main_task_cb(void)
   led_update(&hled3);
 }
 
-/** @brief Function called when the CAN is enabled for this channel
- *  @param uint8_t channel - The CAN channel (0 based)
- *  @retval None
- */
 void can_on_enable_cb(uint8_t channel)
 {
   if (channel == 0) {
@@ -277,10 +257,6 @@ void can_on_enable_cb(uint8_t channel)
   led_set_active(&hled3);
 }
 
-/** @brief Function called when the CAN is disabled for this channel
- *  @param uint8_t channel - The CAN channel (0 based)
- *  @retval None
- */
 void can_on_disable_cb(uint8_t channel)
 {
   if (channel == 0) {
@@ -294,10 +270,6 @@ void can_on_disable_cb(uint8_t channel)
   led_set_inactive(&hled3);
 }
 
-/** @brief Function called when a CAN frame is send on this channel
- *  @param uint8_t channel - The CAN channel (0 based)
- *  @retval None
- */
 void can_on_tx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
 {
   UNUSED(channel);
@@ -305,10 +277,6 @@ void can_on_tx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
   led_indicate_rxtx(&hled1);
 }
 
-/** @brief Function called when a CAN frame is received on this channel
- *  @param uint8_t channel - The CAN channel (0 based)
- *  @retval None
- */
 void can_on_rx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
 {
   UNUSED(channel);
@@ -316,11 +284,6 @@ void can_on_rx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
   led_indicate_rxtx(&hled2);
 }
 
-/** @brief Function called to set the CAN termination resistor ON of OFF
- *  @param uint8_t channel - The CAN channel (0 based)
- *  @param GPIO_PinState state - The requested state of the pin
- *  @retval None
- */
 void can_set_term_cb(uint8_t channel, GPIO_PinState state)
 {
   if (channel == 0) {
@@ -331,10 +294,6 @@ void can_set_term_cb(uint8_t channel, GPIO_PinState state)
   }
 }
 
-/** @brief Function called to get the state of the CAN termination resistor
- *  @param uint8_t channel - The CAN channel (0 based)
- *  @retval The current state of the CAN termination pin
- */
 GPIO_PinState can_get_term_cb(uint8_t channel)
 {
   if (channel == 0) {

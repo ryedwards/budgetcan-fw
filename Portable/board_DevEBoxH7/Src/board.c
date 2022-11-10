@@ -37,11 +37,11 @@ THE SOFTWARE.
 
 extern void main_usbd_gs_can_set_channel_cb(USBD_HandleTypeDef *hUSB);
 
-LED_HandleTypeDef hled1;
-
 FDCAN_HandleTypeDef hfdcan1;
 FDCAN_HandleTypeDef hfdcan2;
+LED_HandleTypeDef hled1;
 
+extern USBD_GS_CAN_HandleTypeDef hGS_CAN;
 extern TIM_HandleTypeDef htim2;
 extern QueueHandle_t queue_to_hostHandle;
 
@@ -187,8 +187,10 @@ static void task_my_program(void *argument)
 
 void main_init_cb(void)
 {
-  can_init(&hfdcan1, FDCAN1);
-  can_init(&hfdcan2, FDCAN2);
+  hGS_CAN.channels[0] = &hfdcan1;
+  hGS_CAN.channels[1] = &hfdcan2;
+  can_init(hGS_CAN.channels[0], FDCAN1);
+  can_init(hGS_CAN.channels[1], FDCAN2);
   led_init(&hled1, LED1_GPIO_Port, LED1_Pin, LED_MODE_INACTIVE, LED_ACTIVE_LOW);
   host_channel_is_active = false;
 }
@@ -199,12 +201,6 @@ void main_rtos_init_cb(void)
               TASK_MY_PROGRAM_PRIORITY, &xCreatedMyProgramTask);  
 }
 
-void main_usbd_gs_can_set_channel_cb(USBD_HandleTypeDef *hUSB)
-{
-  USBD_GS_CAN_SetChannel(hUSB, 0, &hfdcan1);
-  USBD_GS_CAN_SetChannel(hUSB, 1, &hfdcan2);
-}
-
 void main_task_cb(void)
 {
   /* update all the LEDs */
@@ -213,24 +209,28 @@ void main_task_cb(void)
 
 void can_on_enable_cb(uint8_t channel)
 {
+  UNUSED(channel);
   led_set_active(&hled1);
   host_channel_is_active = true;
 }
 
 void can_on_disable_cb(uint8_t channel)
 {
+  UNUSED(channel);
   led_set_inactive(&hled1);
   host_channel_is_active = false;
 }
 
 void can_on_tx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
 {
+  UNUSED(channel);
   UNUSED(frame);
   led_indicate_rxtx(&hled1);
 }
 
 void can_on_rx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
 {
+  UNUSED(channel);
   UNUSED(frame);
   led_indicate_rxtx(&hled1);
 }

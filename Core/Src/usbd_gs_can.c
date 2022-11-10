@@ -299,13 +299,9 @@ static const struct gs_device_bt_const_extended USBD_GS_CAN_btconst_extended = {
   .dbrp_inc = 1, // dbrp_inc;
 };
 
-uint8_t USBD_GS_CAN_Init(USBD_HandleTypeDef *pdev)
+uint8_t USBD_GS_CAN_Init(USBD_HandleTypeDef *pdev, USBD_GS_CAN_HandleTypeDef *hcan)
 {
-  USBD_GS_CAN_HandleTypeDef *hcan = USBD_static_malloc(sizeof(USBD_GS_CAN_HandleTypeDef));
-  assert_param(hcan);
   /* dynamically provide the CAN clock value */
-  //USBD_GS_CAN_btconst_extended.fclk_can = HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_FDCAN);
-  //USBD_GS_CAN_btconst.fclk_can = HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_FDCAN);
   hcan->TxState = 0;
   pdev->pClassData = hcan;
   return USBD_OK;
@@ -339,23 +335,6 @@ static uint8_t USBD_GS_CAN_SOF(struct _USBD_HandleTypeDef *pdev)
   USBD_GS_CAN_HandleTypeDef *hcan = (USBD_GS_CAN_HandleTypeDef*) pdev->pClassData;
   hcan->sof_timestamp_us = __HAL_TIM_GET_COUNTER(&htim2);
   return USBD_OK;
-}
-
-void USBD_GS_CAN_SetChannel(USBD_HandleTypeDef *pdev, uint8_t channel, CAN_HANDLE_TYPEDEF* handle) {
-  USBD_GS_CAN_HandleTypeDef *hcan = (USBD_GS_CAN_HandleTypeDef*) pdev->pClassData;
-
-  assert_param(hcan);
-  if (channel < CAN_NUM_CHANNELS) {
-    hcan->channels[channel] = handle;
-  }
-  return;
-}
-
-CAN_HANDLE_TYPEDEF* USBD_GS_CAN_GetChannelHandle(USBD_HandleTypeDef *pdev, uint8_t channel) {
-  USBD_GS_CAN_HandleTypeDef *hcan = (USBD_GS_CAN_HandleTypeDef*) pdev->pClassData;
-
-  assert_param(channel < CAN_NUM_CHANNELS);
-  return hcan->channels[channel];
 }
 
 uint8_t USBD_GS_CAN_GetChannelNumber(USBD_HandleTypeDef *pdev, CAN_HANDLE_TYPEDEF* handle) {

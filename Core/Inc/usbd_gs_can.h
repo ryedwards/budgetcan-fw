@@ -82,9 +82,7 @@ typedef struct {
 } USBD_GS_CAN_HandleTypeDef __attribute__ ((aligned (4)));
 
 /* Exported functions --------------------------------------------------------*/
-uint8_t USBD_GS_CAN_Init(USBD_HandleTypeDef *pdev);//, queue_t *q_frame_pool, queue_t *q_from_host, led_data_t *leds);
-void USBD_GS_CAN_SetChannel(USBD_HandleTypeDef *pdev, uint8_t channel, CAN_HANDLE_TYPEDEF* handle);
-CAN_HANDLE_TYPEDEF* USBD_GS_CAN_GetChannelHandle(USBD_HandleTypeDef *pdev, uint8_t channel);
+uint8_t USBD_GS_CAN_Init(USBD_HandleTypeDef *pdev, USBD_GS_CAN_HandleTypeDef *hcan);
 uint8_t USBD_GS_CAN_GetChannelNumber(USBD_HandleTypeDef *pdev, CAN_HANDLE_TYPEDEF* handle);
 bool USBD_GS_CAN_TxReady(USBD_HandleTypeDef *pdev);
 uint8_t USBD_GS_CAN_PrepareReceive(USBD_HandleTypeDef *pdev);

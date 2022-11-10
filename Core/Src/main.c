@@ -68,6 +68,7 @@ QueueHandle_t queue_from_hostHandle;
 QueueHandle_t queue_to_hostHandle;
 
 USBD_HandleTypeDef hUSB;
+USBD_GS_CAN_HandleTypeDef hGS_CAN;
 
 uint32_t dfu_reset_to_bootloader_magic;
 /* USER CODE END PV */
@@ -78,7 +79,6 @@ static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 static void task_main(void *argument);
 static void dfu_run_bootloader(void);
-void main_usbd_gs_can_set_channel_cb(USBD_HandleTypeDef *hUSB);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -119,16 +119,8 @@ int main(void)
 
   /* Function to allow the board to init any features */
   main_init_cb();
-
-  USBD_Init(&hUSB, (USBD_DescriptorsTypeDef*)&FS_Desc, DEVICE_FS);
-  USBD_RegisterClass(&hUSB, &USBD_GS_CAN);
-
-  USBD_GS_CAN_Init(&hUSB);
-  /* Assigns the channel to the gs_usb handler for all defined CAN channels */
-  main_usbd_gs_can_set_channel_cb(&hUSB);
-  USBD_Start(&hUSB);
-
-    /* Init the RTOS tasks */
+  
+  /* Init the RTOS tasks */
   main_rtos_init_cb();
 
   xTaskCreate(task_main, "Main Task", TASK_MAIN_STACK_SIZE, NULL,
@@ -137,8 +129,6 @@ int main(void)
   /* Init the RTOS streams and queues */
   queue_from_hostHandle = xQueueCreate(QUEUE_SIZE_HOST_TO_DEV, sizeof(struct GS_HOST_FRAME));
   queue_to_hostHandle = xQueueCreate(QUEUE_SIZE_DEV_TO_HOST, sizeof(struct GS_HOST_FRAME));
-
-
 
   /* Start scheduler */
   vTaskStartScheduler();
@@ -209,8 +199,13 @@ static void MX_TIM2_Init(void)
 
 void task_main(void *argument)
 {
-
+  UNUSED(argument);
   struct GS_HOST_FRAME frame;
+
+  USBD_Init(&hUSB, (USBD_DescriptorsTypeDef*)&FS_Desc, DEVICE_FS);
+  USBD_RegisterClass(&hUSB, &USBD_GS_CAN);
+  USBD_GS_CAN_Init(&hUSB, &hGS_CAN);
+  USBD_Start(&hUSB);
 
   /* Infinite loop */
   for(;;)
@@ -227,7 +222,7 @@ void task_main(void *argument)
         continue; /* just loop again so below code runs normally */
       }
 #endif /* LIN_SUPPORT */
-      if (can_send(USBD_GS_CAN_GetChannelHandle(&hUSB,frame.channel), &frame)) {
+      if (can_send(hGS_CAN.channels[frame.channel], &frame)) {
         /* Echo sent frame back to host */
         frame.flags = 0x0;
         frame.reserved = 0x0;
@@ -245,6 +240,12 @@ void task_main(void *argument)
         /* throw the message back onto the queue */
         xQueueSendToFront(queue_to_hostHandle, &frame, 0);
       }
+    }
+
+    if (uxQueueSpacesAvailable(queue_to_hostHandle) == 0  ||
+        uxQueueSpacesAvailable(queue_from_hostHandle) == 0) {
+      /* TODO: we should probably shut down CAN and start over?? */
+      
     }
 
     /* check for DFU update flag and kick to bootloader if set */
@@ -301,14 +302,6 @@ __weak void main_init_cb(void)
  */
 __weak void main_rtos_init_cb(void)
 {
-}
-/** @brief Callback function called during USB init after the hUSB handle is configured
- *  @param USBD_HandleTypeDef *hUSB - handle to the hUSB structure
- *  @retval None
- */
-__weak void main_usbd_gs_can_set_channel_cb(USBD_HandleTypeDef *hUSB)
-{
-  UNUSED(hUSB);
 }
 /** @brief Callback function called periodically during the main task
  *  @param None

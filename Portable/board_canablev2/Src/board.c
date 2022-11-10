@@ -29,11 +29,10 @@ THE SOFTWARE.
 #include "can.h"
 #include "led.h"
 
-extern void main_usbd_gs_can_set_channel_cb(USBD_HandleTypeDef *hUSB);
-
+FDCAN_HandleTypeDef hfdcan1;
 LED_HandleTypeDef hled1;
 
-FDCAN_HandleTypeDef hfdcan1;
+extern USBD_GS_CAN_HandleTypeDef hGS_CAN;
 
 /**
   * @brief System Clock Configuration
@@ -109,17 +108,9 @@ void MX_GPIO_Init(void)
  */
 void main_init_cb(void)
 {
-  can_init(&hfdcan1, FDCAN1);
+  hGS_CAN.channels[0] = &hfdcan1;
+  can_init(hGS_CAN.channels[0], FDCAN1);
   led_init(&hled1, LED1_GPIO_Port, LED1_Pin, LED_MODE_INACTIVE, LED_ACTIVE_HIGH);
-}
-
-/** @brief Function to assign the CAN HW pointers to the channel index in the USB handle
- *  @param USBD_HandleTypeDef *hUSB - The handle for the USB where will will set up the CAN pointer
- *  @retval None
- */
-void main_usbd_gs_can_set_channel_cb(USBD_HandleTypeDef *hUSB)
-{
-  USBD_GS_CAN_SetChannel(hUSB, 0, &hfdcan1);
 }
 
 /** @brief Function to periodically update any features on the board from the main task
