@@ -106,6 +106,14 @@ void MX_GPIO_Init(void)
  */
 void main_init_cb(void)
 {
+  /* carry over the LED blink from original firmware */
+  for (uint8_t i=0; i<10; i++)
+	{
+		HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+		HAL_Delay(50);
+		HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);
+	}
+  
   hGS_CAN.channels[0] = &hcan;
   can_init(hGS_CAN.channels[0], CAN);
 
