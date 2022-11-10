@@ -35,6 +35,8 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_def.h"
 
+#define BOARD_SYSMEM_RESET_VECTOR    0x1FFF0000
+
 #define USBD_VID                     0x1D50
 #define USBD_LANGID_STRING           1033
 #define USBD_MANUFACTURER_STRING     (uint8_t*) "canable.io"

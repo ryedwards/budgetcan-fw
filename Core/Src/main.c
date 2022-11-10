@@ -41,7 +41,6 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define IS_IRQ_MODE()             ( (SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) != 0)
-#define SYSMEM_RESET_VECTOR            0x1FFF0000
 #define RESET_TO_BOOTLOADER_MAGIC_CODE 0xDEADBEEF
 
 #define TASK_MAIN_STACK_SIZE (configMINIMAL_STACK_SIZE)
@@ -265,17 +264,15 @@ void task_main(void *argument)
  */
 void __initialize_hardware_early(void)
 {
-  void (*bootloader)(void);
-  volatile uint32_t addr = SYSMEM_RESET_VECTOR;
-
   if (dfu_reset_to_bootloader_magic == RESET_TO_BOOTLOADER_MAGIC_CODE) {
-
-    bootloader = (void (*)(void)) (*((uint32_t *)(addr + 4)));
-    dfu_reset_to_bootloader_magic = 0;
-    __set_MSP(*(uint32_t *)addr);
-    bootloader();
+    typedef void (*pFunction)(void);
+    uint32_t JumpAddress = *(__IO uint32_t*) (BOARD_SYSMEM_RESET_VECTOR + 4);
+    pFunction Jump_To_Boot = (pFunction) JumpAddress;
+    __set_MSP(*(__IO uint32_t*) BOARD_SYSMEM_RESET_VECTOR);
+    Jump_To_Boot();
     while (42);
     }
+
     else {
         /* Do nothing - fall through and continue normal init */
     }
