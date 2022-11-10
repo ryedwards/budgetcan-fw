@@ -221,7 +221,7 @@ static void task_lin(void *argument)
 void main_init_cb(void)
 {
   hGS_CAN.channels[0] = &hfdcan1;
-  hGS_CAN.channels[1] = &hfdcan1;
+  hGS_CAN.channels[1] = &hfdcan2;
   can_init(hGS_CAN.channels[0], FDCAN1);
   can_init(hGS_CAN.channels[1], FDCAN2);
 
