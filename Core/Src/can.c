@@ -159,6 +159,7 @@ void can_set_data_bittiming(CAN_HANDLE_TYPEDEF *hcan, uint16_t brp, uint8_t phas
       && (sjw > 0) && (sjw <= 4))
   {
 #if defined(CAN)
+    UNUSED(hcan);
     UNUSED(brp);
     UNUSED(phase_seg1);
     UNUSED(phase_seg2);
@@ -183,6 +184,8 @@ void can_set_data_bittiming(CAN_HANDLE_TYPEDEF *hcan, uint16_t brp, uint8_t phas
 void can_enable(CAN_HANDLE_TYPEDEF *hcan, bool loop_back, bool listen_only, bool one_shot, bool can_mode_fd)
 {
 #if defined(CAN)
+  UNUSED(can_mode_fd);
+
   hcan->Init.AutoRetransmission = one_shot ? DISABLE : ENABLE;
   hcan->Init.Mode = CAN_MODE_NORMAL;
   if (listen_only) hcan->Init.Mode |= CAN_MODE_SILENT;
