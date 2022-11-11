@@ -64,25 +64,24 @@ void led_update(LED_HandleTypeDef* hled)
       HAL_GPIO_WritePin(hled->GPIOx, hled->GPIO_Pin, hled->led_active_level);
       break;
     case LED_MODE_RXTX_ACTIVE:
-      if (HAL_GetTick() > hled->led_rxtx_timeout_tick) {
+      if ((HAL_GetTick() -  hled->led_rxtx_start_tick) > LED_RXTX_ACTIVE_TIME_MS) {
         /* Turn off LED and change the mode to OFF */
         HAL_GPIO_WritePin(hled->GPIOx, hled->GPIO_Pin, !hled->led_active_level);
         hled->led_mode = LED_MODE_RXTX_HOLDOFF;
-        hled->led_rxtx_timeout_tick = HAL_GetTick() + LED_RXTX_INACTIVE_TIME_MS;
+        hled->led_rxtx_start_tick = HAL_GetTick();
       }
       break;
     case LED_MODE_RXTX_HOLDOFF:
       /* prevent LED from going solid ON for high traffic */
-      if (HAL_GetTick() > hled->led_rxtx_timeout_tick) {
-        /* Turn off LED and change the mode to OFF */
-        HAL_GPIO_WritePin(hled->GPIOx, hled->GPIO_Pin, !hled->led_active_level);
-        hled->led_mode = LED_MODE_INACTIVE;
+      if ((HAL_GetTick() - hled->led_rxtx_start_tick) > LED_RXTX_INACTIVE_TIME_MS) {
+        /* Return the LED to it's previous state */
+        hled->led_mode = hled->prev_led_mode;
       }
       break;
     case LED_MODE_BLINK:
-      if (HAL_GetTick() > hled->blink_toggle_timeout_tick){
+      if ((HAL_GetTick() - hled->blink_toggle_start_tick) > (hled->blink_period_ms/2)){
         HAL_GPIO_TogglePin(hled->GPIOx, hled->GPIO_Pin);
-        hled->blink_toggle_timeout_tick = HAL_GetTick() + (hled->blink_period_ms/2);
+        hled->blink_toggle_start_tick = HAL_GetTick();
       }
     default:
       break;
@@ -132,7 +131,7 @@ void led_indicate_rxtx(LED_HandleTypeDef* hled)
     HAL_GPIO_WritePin(hled->GPIOx, hled->GPIO_Pin, hled->led_active_level);
     hled->prev_led_mode = hled->led_mode;
     hled->led_mode = LED_MODE_RXTX_ACTIVE;
-    hled->led_rxtx_timeout_tick = HAL_GetTick() + LED_RXTX_ACTIVE_TIME_MS;
+    hled->led_rxtx_start_tick = HAL_GetTick();
   }
 }
 
@@ -147,7 +146,7 @@ void led_blink(LED_HandleTypeDef* hled, uint32_t period_ms)
   hled->prev_blink_period_ms = hled->blink_period_ms;
   hled->blink_period_ms = period_ms;
   hled->led_mode = LED_MODE_BLINK;
-  hled->blink_toggle_timeout_tick = HAL_GetTick() + (hled->blink_period_ms/2);
+  hled->blink_toggle_start_tick = HAL_GetTick();
 }
 
 /** @brief Function to restore the previous LED mode
