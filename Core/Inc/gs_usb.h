@@ -200,43 +200,48 @@ enum gs_can_state {
 };
 
 /* data types passed between host and device */
-struct gs_host_config {
+__ALIGN_BEGIN struct gs_host_config {
   u32 byte_order;
-} __attribute__((packed));
-/* All data exchanged between host and device is exchanged in host byte order,
- * thanks to the struct gs_host_config byte_order member, which is sent first
- * to indicate the desired byte order.
+} __attribute__((packed)) __ALIGN_END;
+/* The firmware on the original USB2CAN by Geschwister Schneider
+ * Technologie Entwicklungs- und Vertriebs UG exchanges all data
+ * between the host and the device in host byte order. This is done
+ * with the struct gs_host_config::byte_order member, which is sent
+ * first to indicate the desired byte order.
+ *
+ * The widely used open source firmware candleLight doesn't support
+ * this feature and exchanges the data in little endian byte order.
  */
 
-struct gs_device_config {
+__ALIGN_BEGIN struct gs_device_config {
   u8 reserved1;
   u8 reserved2;
   u8 reserved3;
   u8 icount;
   u32 sw_version;
   u32 hw_version;
-} __attribute__((packed));
+} __attribute__((packed)) __ALIGN_END;
 
-struct gs_device_mode {
+__ALIGN_BEGIN struct gs_device_mode {
   u32 mode;
   u32 flags;
-} __attribute__((packed));
+} __attribute__((packed)) __ALIGN_END;
 
-struct gs_device_state {
+__ALIGN_BEGIN struct gs_device_state {
   u32 state;
   u32 rxerr;
   u32 txerr;
-} __attribute__((packed));
+} __attribute__((packed)) __ALIGN_END;
 
-struct gs_device_bittiming {
+__ALIGN_BEGIN struct gs_device_bittiming {
   u32 prop_seg;
   u32 phase_seg1;
   u32 phase_seg2;
   u32 sjw;
   u32 brp;
-} __attribute__((packed));
+} __attribute__((packed)) __ALIGN_END;
 
-struct gs_device_bt_const {
+__ALIGN_BEGIN struct gs_device_bt_const {
   u32 feature;
   u32 fclk_can;
   u32 tseg1_min;
@@ -247,9 +252,9 @@ struct gs_device_bt_const {
   u32 brp_min;
   u32 brp_max;
   u32 brp_inc;
-} __attribute__((packed));
+} __attribute__((packed)) __ALIGN_END;
 
-struct gs_device_bt_const_extended {
+__ALIGN_BEGIN struct gs_device_bt_const_extended {
   u32 feature;
   u32 fclk_can;
   u32 tseg1_min;
@@ -271,19 +276,19 @@ struct gs_device_bt_const_extended {
   u32 dbrp_inc;
 } __attribute__((packed));
 
-struct gs_device_termination_state {
+__ALIGN_BEGIN struct gs_device_termination_state {
 	u32 state;
-} __packed;
+} __packed __ALIGN_END;
 
-struct classic_can {
+__ALIGN_BEGIN struct classic_can {
   u8 data[8];
-} __attribute__((packed));
+} __attribute__((packed)) __ALIGN_END;
 
-struct canfd {
+__ALIGN_BEGIN struct canfd {
   u8 data[64];
-} __attribute__((packed));
+} __attribute__((packed)) __ALIGN_END;
 
-struct gs_host_frame {
+__ALIGN_BEGIN struct gs_host_frame {
   u32 echo_id;
   u32 can_id;
 
@@ -297,9 +302,9 @@ struct gs_host_frame {
     struct canfd canfd;
   };
   u32 timestamp_us;
-} __attribute__((packed));
+} __attribute__((packed)) __ALIGN_END;
 
-struct gs_host_frame_classic_can {
+__ALIGN_BEGIN struct gs_host_frame_classic_can {
   u32 echo_id;
   u32 can_id;
 
@@ -310,12 +315,7 @@ struct gs_host_frame_classic_can {
 
   struct classic_can classic_can;
   u32 timestamp_us;
-} __attribute__((packed));
-
-struct gs_tx_context {
-  struct gs_can *dev;
-  unsigned int echo_id;
-};
+} __attribute__((packed)) __ALIGN_END;
 
 #ifdef __cplusplus
 }
