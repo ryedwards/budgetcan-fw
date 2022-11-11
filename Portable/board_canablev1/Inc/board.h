@@ -51,6 +51,14 @@ extern "C" {
 #define CAN_TS1_INIT        13
 #define CAN_TS2_INIT        2
 
+#define CAN_TIME_TRG_MODE_INIT      DISABLE
+#define CAN_AUTO_BUS_OFF_INIT       ENABLE
+#define CAN_AUTO_WAKE_UP_INIT       DISABLE
+#define CAN_AUTO_RETX_INIT          ENABLE
+#define CAN_RX_FIFO_LCKD_INIT       DISABLE
+#define CAN_TX_FIFO_PRI_INIT        ENABLE
+#define CAN_MODE_INIT               CAN_MODE_NORMAL
+
 #define CAN_NUM_CHANNELS  1
 #define CAN_CLOCK_SPEED   48000000
 

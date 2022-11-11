@@ -61,13 +61,13 @@ void can_init(CAN_HANDLE_TYPEDEF *hcan, CAN_TYPEDEF *instance)
 {
 #if defined(CAN)
   hcan->Instance = instance;
-  hcan->Init.TimeTriggeredMode = DISABLE;
-  hcan->Init.AutoBusOff = ENABLE;
-  hcan->Init.AutoWakeUp = DISABLE;
-  hcan->Init.AutoRetransmission = ENABLE;
-  hcan->Init.ReceiveFifoLocked = DISABLE;
-  hcan->Init.TransmitFifoPriority = ENABLE;
-  hcan->Init.Mode = CAN_MODE_NORMAL;
+  hcan->Init.TimeTriggeredMode = CAN_TIME_TRG_MODE_INIT;
+  hcan->Init.AutoBusOff = CAN_AUTO_BUS_OFF_INIT;
+  hcan->Init.AutoWakeUp = CAN_AUTO_WAKE_UP_INIT;
+  hcan->Init.AutoRetransmission = CAN_AUTO_RETX_INIT;
+  hcan->Init.ReceiveFifoLocked = CAN_RX_FIFO_LCKD_INIT;
+  hcan->Init.TransmitFifoPriority = CAN_TX_FIFO_PRI_INIT;
+  hcan->Init.Mode = CAN_MODE_INIT;
 
   /* all values for the bxCAN init are -1 and shifted */
   hcan->Init.SyncJumpWidth = ((CAN_SJW_INIT)-1) << CAN_BTR_SJW_Pos;
@@ -79,11 +79,11 @@ void can_init(CAN_HANDLE_TYPEDEF *hcan, CAN_TYPEDEF *instance)
 
 #elif defined(FDCAN1)
   hcan->Instance = instance;
-  hcan->Init.FrameFormat = FDCAN_FRAME_FD_BRS;
-  hcan->Init.Mode = FDCAN_MODE_NORMAL;
-  hcan->Init.AutoRetransmission = DISABLE;
-  hcan->Init.TransmitPause = DISABLE;
-  hcan->Init.ProtocolException = ENABLE;
+  hcan->Init.FrameFormat = FDCAN_FRAME_FMT_INIT;
+  hcan->Init.Mode = FDCAN_MODE_INIT;
+  hcan->Init.AutoRetransmission = FDCAN_AUTO_RETX_INIT;
+  hcan->Init.TransmitPause = FDCAN_AUTO_TX_PAUSE_INIT;
+  hcan->Init.ProtocolException = FDCAN_PROT_EXCPTN_INIT;
   hcan->Init.NominalPrescaler = FDCAN_BRP_INIT;
   hcan->Init.NominalSyncJumpWidth = FDCAN_SJW_INIT;
   hcan->Init.NominalTimeSeg1 = FDCAN_TS1_INIT;
@@ -91,24 +91,26 @@ void can_init(CAN_HANDLE_TYPEDEF *hcan, CAN_TYPEDEF *instance)
   hcan->Init.DataPrescaler = FDCAN_DATA_BRP_INIT;
   hcan->Init.DataSyncJumpWidth = FDCAN_DATA_SJW_INIT;
   hcan->Init.DataTimeSeg1 = FDCAN_DATA_TS1_INIT;
-  hcan->Init.DataTimeSeg2 = FDCAN_DATA_TS1_INIT;
-  hcan->Init.StdFiltersNbr = 0;
-  hcan->Init.ExtFiltersNbr = 0;
-  hcan->Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
+  hcan->Init.DataTimeSeg2 = FDCAN_DATA_TS2_INIT;
+  hcan->Init.StdFiltersNbr = FDCAN_STD_FLTR_NUM_INIT;
+  hcan->Init.ExtFiltersNbr = FDCAN_EXT_FLTR_NUM_INIT;
+  hcan->Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION_INIT;
 #if defined(STM32H7)
-  hcan->Init.MessageRAMOffset = 0;
-  hcan->Init.RxFifo0ElmtsNbr = 0;
-  hcan->Init.RxFifo0ElmtSize = FDCAN_DATA_BYTES_8;
-  hcan->Init.RxFifo1ElmtsNbr = 0;
-  hcan->Init.RxFifo1ElmtSize = FDCAN_DATA_BYTES_8;
-  hcan->Init.RxBuffersNbr = 0;
-  hcan->Init.RxBufferSize = FDCAN_DATA_BYTES_8;
-  hcan->Init.TxEventsNbr = 0;
-  hcan->Init.TxBuffersNbr = 0;
-  hcan->Init.TxFifoQueueElmtsNbr = 0;  
-  hcan->Init.TxElmtSize = FDCAN_DATA_BYTES_8;
+/* The STM32H7xx has a slightly different FDCAN implementation 
+  The clock divider was removed? */
+  hcan->Init.MessageRAMOffset = FDCAN_MSG_RAM_OFST_INIT;
+  hcan->Init.RxFifo0ElmtsNbr = FDCAN_RX_FIFO0_ELEM_NUM_INIT;
+  hcan->Init.RxFifo0ElmtSize = FDCAN_RX_FIFO0_ELEM_SZ_INIT;
+  hcan->Init.RxFifo1ElmtsNbr = FDCAN_RX_FIFO1_ELEM_NUM_INIT;
+  hcan->Init.RxFifo1ElmtSize = FDCAN_RX_FIFO1_ELEM_SZ_INIT;
+  hcan->Init.RxBuffersNbr = FDCAN_RX_BUFF_NUM_INIT;
+  hcan->Init.RxBufferSize = FDCAN_RX_BUFF_SZ_INIT;
+  hcan->Init.TxEventsNbr = FDCAN_TX_EVNT_NUM_INIT;
+  hcan->Init.TxBuffersNbr = FDCAN_TX_BUFF_NUM_INIT;
+  hcan->Init.TxFifoQueueElmtsNbr = FDCAN_TX_FIFO_ELEM_NUM_INIT;
+  hcan->Init.TxElmtSize = FDCAN_TX_FIFO_ELEM_SZ_INIT;
 #else
-  hcan->Init.ClockDivider = FDCAN_CLOCK_DIV1;
+  hcan->Init.ClockDivider = FDCAN_CLOCK_DIV_INIT;
 #endif  
   HAL_FDCAN_Init(hcan);
 #endif

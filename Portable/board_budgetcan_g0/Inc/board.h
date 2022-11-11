@@ -46,6 +46,7 @@ extern "C" {
 #define USBD_INTERFACE_STRING        (uint8_t*) "gs_usb interface"
 #define DFU_INTERFACE_STRING         (uint8_t*) "budgetcan_g0 DFU interface"
 
+/* FDCAN init values for this board */
 #define FDCAN_SJW_INIT        1
 #define FDCAN_BRP_INIT        8
 #define FDCAN_TS1_INIT        13
@@ -54,7 +55,17 @@ extern "C" {
 #define FDCAN_DATA_SJW_INIT   4
 #define FDCAN_DATA_BRP_INIT   2
 #define FDCAN_DATA_TS1_INIT   15
-#define DFCAN_DATA_TS2_INIT   4
+#define FDCAN_DATA_TS2_INIT   4
+
+#define FDCAN_CLOCK_DIV_INIT        FDCAN_CLOCK_DIV1
+#define FDCAN_FRAME_FMT_INIT        FDCAN_FRAME_FD_BRS
+#define FDCAN_MODE_INIT             FDCAN_MODE_NORMAL
+#define FDCAN_AUTO_RETX_INIT        DISABLE
+#define FDCAN_AUTO_TX_PAUSE_INIT    DISABLE
+#define FDCAN_PROT_EXCPTN_INIT      ENABLE
+#define FDCAN_STD_FLTR_NUM_INIT     0
+#define FDCAN_EXT_FLTR_NUM_INIT     0
+#define FDCAN_TX_FIFO_OPERATION_INIT    FDCAN_TX_FIFO_OPERATION
 
 #define CANFD_SUPPORT     1
 #define CAN_TERM_SUPPORT  1
