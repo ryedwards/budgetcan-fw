@@ -55,15 +55,15 @@ C_SOURCES =  \
 ../../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c \
 ../../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c \
 ../../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c \
-../../Middlewares/Third_Party/FreeRTOS/Source/croutine.c \
-../../Middlewares/Third_Party/FreeRTOS/Source/event_groups.c \
-../../Middlewares/Third_Party/FreeRTOS/Source/list.c \
-../../Middlewares/Third_Party/FreeRTOS/Source/queue.c \
-../../Middlewares/Third_Party/FreeRTOS/Source/stream_buffer.c \
-../../Middlewares/Third_Party/FreeRTOS/Source/tasks.c \
-../../Middlewares/Third_Party/FreeRTOS/Source/timers.c \
-../../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM0/port.c \
-../../Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c \
+../../Middlewares/Third_Party/FreeRTOS/croutine.c \
+../../Middlewares/Third_Party/FreeRTOS/event_groups.c \
+../../Middlewares/Third_Party/FreeRTOS/list.c \
+../../Middlewares/Third_Party/FreeRTOS/queue.c \
+../../Middlewares/Third_Party/FreeRTOS/stream_buffer.c \
+../../Middlewares/Third_Party/FreeRTOS/tasks.c \
+../../Middlewares/Third_Party/FreeRTOS/timers.c \
+../../Middlewares/Third_Party/FreeRTOS/portable/GCC/ARM_CM0/port.c \
+../../Middlewares/Third_Party/FreeRTOS/portable/MemMang/heap_4.c \
 ../../Core/Src/app_freertos.c \
 ../../Core/Src/can.c \
 ../../Core/Src/led.c \
@@ -140,8 +140,8 @@ C_INCLUDES =  \
 -I../../Drivers/CMSIS_DEVICE_F0/Include \
 -I../../Drivers/CMSIS/Include \
 -I../../Middlewares/ST/STM32_USB_Device_Library/Core/Inc \
--I../../Middlewares/Third_Party/FreeRTOS/Source/include \
--I../../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM0
+-I../../Middlewares/Third_Party/FreeRTOS/include \
+-I../../Middlewares/Third_Party/FreeRTOS/portable/GCC/ARM_CM0
 
 # compile gcc flags
 ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -Wextra -Wstrict-prototypes -fdata-sections -ffunction-sections

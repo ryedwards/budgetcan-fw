@@ -1,8 +1,6 @@
-/* USER CODE BEGIN Header */
 /*
- * FreeRTOS Kernel V10.3.1
- * Portion Copyright (C) 2017 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
- * Portion Copyright (C) 2019 StMicroelectronics, Inc.  All Rights Reserved.
+ * FreeRTOS V202112.00
+ * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -26,7 +24,6 @@
  *
  * 1 tab == 4 spaces!
  */
-/* USER CODE END Header */
 
 #ifndef FREERTOS_CONFIG_H
 #define FREERTOS_CONFIG_H
@@ -37,27 +34,17 @@
  * These definitions should be adjusted for your particular hardware and
  * application requirements.
  *
- * These parameters and more are described within the 'configuration' section of the
- * FreeRTOS API documentation available on the FreeRTOS.org web site.
+ * THESE PARAMETERS ARE DESCRIBED WITHIN THE 'CONFIGURATION' SECTION OF THE
+ * FreeRTOS API DOCUMENTATION AVAILABLE ON THE FreeRTOS.org WEB SITE.
  *
  * See http://www.freertos.org/a00110.html
  *----------------------------------------------------------*/
-
-/* USER CODE BEGIN Includes */
-/* Section where include file can be added */
-/* USER CODE END Includes */
 
 /* Ensure definitions are only used by the compiler, and not by the assembler. */
 #if defined(__ICCARM__) || defined(__CC_ARM) || defined(__GNUC__)
   #include <stdint.h>
   extern uint32_t SystemCoreClock;
 #endif
-#ifndef CMSIS_device_header
-#define CMSIS_device_header "stm32g0xx.h"
-#endif /* CMSIS_device_header */
-
-#define configENABLE_FPU                         0
-#define configENABLE_MPU                         0
 
 #define configUSE_PREEMPTION                     1
 #define configSUPPORT_STATIC_ALLOCATION          0
@@ -65,11 +52,11 @@
 #define configUSE_IDLE_HOOK                      0
 #define configUSE_TICK_HOOK                      0
 #define configCPU_CLOCK_HZ                       ( SystemCoreClock )
-#define configTICK_RATE_HZ                       ((TickType_t)1000)
+#define configTICK_RATE_HZ                       ((TickType_t) 1000 )
 #define configMAX_PRIORITIES                     ( 5 )
-#define configMINIMAL_STACK_SIZE                 ((uint16_t)128)
-#define configTOTAL_HEAP_SIZE                    ((size_t)16384)
-#define configMAX_TASK_NAME_LEN                  ( 10 )
+#define configMINIMAL_STACK_SIZE                 ((unsigned short) 130 )
+#define configTOTAL_HEAP_SIZE                    ((size_t) (75 * 1024) )
+#define configMAX_TASK_NAME_LEN                  ( 5 )
 #define configUSE_TRACE_FACILITY                 1
 #define configUSE_16_BIT_TICKS                   0
 #define configUSE_MUTEXES                        1
@@ -95,7 +82,7 @@
 #define configTIMER_TASK_STACK_DEPTH             256
 
 /* The following flag must be enabled only when using newlib */
-#define configUSE_NEWLIB_REENTRANT          1
+#define configUSE_NEWLIB_REENTRANT           0
 
 /* Set the following definitions to 1 to include the API function, or zero
 to exclude the API function. */
@@ -110,25 +97,18 @@ to exclude the API function. */
 #define INCLUDE_xTimerPendFunctionCall       0
 #define INCLUDE_xQueueGetMutexHolder         0
 #define INCLUDE_uxTaskGetStackHighWaterMark  0
-#define INCLUDE_xTaskGetCurrentTaskHandle    0
+#define INCLUDE_xTaskGetCurrentTaskHandle    1
 #define INCLUDE_eTaskGetState                1
-
-#define USE_FreeRTOS_HEAP_4
 
 /* Normal assert() semantics without relying on the provision of an assert.h
 header file. */
-/* USER CODE BEGIN 1 */
 #define configASSERT( x ) if ((x) == 0) {taskDISABLE_INTERRUPTS(); for( ;; );}
-/* USER CODE END 1 */
+
 
 /* Definitions that map the FreeRTOS port interrupt handlers to their CMSIS
 standard names. */
-#define vPortSVCHandler    SVC_Handler
-#define xPortPendSVHandler PendSV_Handler
+#define vPortSVCHandler     SVC_Handler
+#define xPortPendSVHandler  PendSV_Handler
 #define xPortSysTickHandler SysTick_Handler
-
-/* USER CODE BEGIN Defines */
-/* Section where parameter definitions can be added (for instance, to override default ones in FreeRTOS.h) */
-/* USER CODE END Defines */
 
 #endif /* FREERTOS_CONFIG_H */
