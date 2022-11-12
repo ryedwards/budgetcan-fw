@@ -80,13 +80,13 @@ Loading the slot is a two message process.  The first message sent is the data b
 The data message is simply a CAN frame with a DLC of 8 that contains the 8 bytes of data you wish to load into the table
 
 The command message has the following structure:
-Byte 0: Command type - 0 = Load slot, 1 = Reserved, 2 = Enable slot, 3 = Disable slot, 4 = Disable all slots, 5 = Erase all slots 
-Byte 1: Channel - 0-255 : Developer may chose to have multiple LIN channels.  This value defines which channel the command will be carried out on.
-Byte 2: Slot index - 0-255: By default there are 10 slots but a developer may choose to offer as many as 255.  This value defines which slot the command will be carried out on.
-Byte 3: Slot flags - Bit 0 - 1 = Slot is active, 0 = Slot is inactive : Bits 1-7 = Reserved
-Byte 4: Slot action - Bits 0:1 - 00 = Slave mode, 01 = Monitor mode, 10 & 11 = Reserved, Bits 2-7 = Reserved
-Byte 5: PID : The PID that triggers a match on this slot
-Byte 6: Length : The amount of data that will be returned in slave mode (0-8)
+- Byte 0: Command type - 0 = Load slot, 1 = Reserved, 2 = Enable slot, 3 = Disable slot, 4 = Disable all slots, 5 = Erase all slots 
+- Byte 1: Channel - 0-255 : Developer may chose to have multiple LIN channels.  This value defines which channel the command will be carried out on.
+- Byte 2: Slot index - 0-255: By default there are 10 slots but a developer may choose to offer as many as 255.  This value defines which slot the command will be carried out on.
+- Byte 3: Slot flags - Bit 0 - 1 = Slot is active, 0 = Slot is inactive : Bits 1-7 = Reserved
+- Byte 4: Slot action - Bits 0:1 - 00 = Slave mode, 01 = Monitor mode, 10 & 11 = Reserved, Bits 2-7 = Reserved
+- Byte 5: PID : The PID that triggers a match on this slot
+- Byte 6: Length : The amount of data that will be returned in slave mode (0-8)
 
 The following is an example of setting up slot 0 on channel 0 to trigger a slave response on PID $02 with 4 bytes of data (0x00, 0x00, 0x60, 0x40)
 
@@ -98,19 +98,19 @@ Setting up the data portion of the slot:
 
 Loading the slot table with the data provided above and immediately start responding:
 
-|CANID|DLC|Channel|Index|Flags|ActionID|PID|Len|xx|xx|
+|CANID|DLC|Channel|Index|Flags|Action ID|PID|Len|xx|xx|
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 |0x1FFFFE80|0x08|0x00|0x00|0x01|0x00|0x02|0x04|0x00|0x00|
 
 When the table is already loaded you can activate and inactivate that individual slot
 
 The following is an example of setting a speicifc slot inactive (Channel 0, Index 2)
-|CANID|DLC|Channel|Index|Flags|ActionID|PID|Len|xx|xx|
+|CANID|DLC|Channel|Index|Flags|Action ID|PID|Len|xx|xx|
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 |0x1FFFFE80|0x08|0x00|0x02|0x00|0x00|0x00|0x00|0x00|0x00|
 
 The following is an example of setting a speicifc slot active (Channel 0, Index 2)
-|CANID|DLC|Channel|Index|Flags|ActionID|PID|Len|xx|xx|
+|CANID|DLC|Channel|Index|Flags|Action ID|PID|Len|xx|xx|
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 |0x1FFFFE80|0x08|0x00|0x02|0x01|0x00|0x00|0x00|0x00|0x00|
 
