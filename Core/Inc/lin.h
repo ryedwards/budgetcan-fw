@@ -42,7 +42,21 @@ extern "C" {
 
 #if defined(LIN_SUPPORT)
 /* Exported defines -----------------------------------------------------------*/
-
+#if !defined(LIN_MAX_USART_CHAN)
+#define LIN_MAX_USART_CHAN          1U
+#endif
+#if !defined(LIN_MAX_DATA_BYTES)
+#define LIN_MAX_DATA_BYTES          8U
+#endif
+#if !defined(LIN_MAX_SLOT_ITEMS)
+#define LIN_MAX_SLOT_ITEMS          10U
+#endif
+#if !defined(LIN_CONFIG_MSG_ID_CMD)
+#define LIN_CONFIG_MSG_ID_CMD       0x1FFFFE80
+#endif
+#if !defined(LIN_CONFIG_MSG_ID_DATA)
+#define LIN_CONFIG_MSG_ID_DATA      0x1FFFFE81
+#endif
 
 /* Exported types ------------------------------------------------------------*/
 typedef enum {
@@ -63,12 +77,12 @@ typedef enum {
 } lin_state_t;
 
 typedef enum {
-  LIN_CMD_LOAD_MSG,
-  LIN_CMD_READ_MSG,
-  LIN_CMD_ENABLE_MSG,
-  LIN_CMD_DISABLE_MSG,
-  LIN_CMD_DISABLE_ALL_MSGS,
-  LIN_CMD_ERASE_ALL_MSGS,
+  LIN_CMD_LOAD_SLOT,
+  LIN_CMD_READ_SLOT,
+  LIN_CMD_ENABLE_SLOT,
+  LIN_CMD_DISABLE_SLOT,
+  LIN_CMD_DISABLE_ALL_SLOTS,
+  LIN_CMD_ERASE_ALL_SLOTS,
   LIN_CMD_ENABLE_LIN,
   LIN_CMD_DISABLE_LIN
 } lin_command_type_t;
@@ -80,7 +94,7 @@ typedef union
     uint8_t PID;
     uint8_t len;
     uint8_t data[8];
-  } lin_msg_data;
+  } lin_slot_data;
   uint32_t lin_baud_rate;
   uint8_t checksum_type;  
 } lin_data_t;
@@ -102,28 +116,28 @@ typedef struct __attribute__((packed))
 {
   uint8_t is_active : 1;
   uint8_t lin_node_action : 2;
-} lin_msg_flags_t;
+} lin_slot_flags_t;
 
 typedef struct __attribute__((packed))
 {
-  lin_msg_flags_t lin_msg_flags;
+  lin_slot_flags_t lin_slot_flags;
   uint8_t PID;
   uint8_t len;
   uint8_t data[LIN_MAX_DATA_BYTES];
-} lin_msg_data_t;
+} lin_slot_data_t;
 
 typedef struct {
 
   uint8_t lin_cmd_type;
   uint8_t lin_channel;
   uint8_t lin_table_index;
-  lin_msg_data_t lin_data;
+  lin_slot_data_t lin_data;
 } lin_config_t;
 
 
 typedef struct {
   uint8_t lin_instance;
-  uint8_t lin_msg_table_index;
+  uint8_t lin_slot_table_index;
   UART_HandleTypeDef* huart;
   lin_flags_t lin_flags;
   uint8_t UartRxBuffer[1];

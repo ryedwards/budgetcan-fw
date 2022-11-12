@@ -49,10 +49,7 @@ THE SOFTWARE.
 #define LIN_RX_TIMEOUT_VALUE 3
 #define LIN_RX_MAX_DATA_BYTES 9
 
-#define LIN_MAX_USART_CHAN      1U
-#define LIN_MAX_MESSAGE_ITEMS   10U
-
-static lin_msg_data_t lin_message_table[LIN_MAX_USART_CHAN][LIN_MAX_MESSAGE_ITEMS];
+static lin_slot_data_t lin_slot_table[LIN_MAX_USART_CHAN][LIN_MAX_SLOT_ITEMS];
 static lin_config_t lin_config_data;
 
 extern LIN_HandleTypeDef hlin1;
@@ -60,14 +57,14 @@ extern FDCAN_HandleTypeDef hfdcan1;
 
 static FlagStatus lin_hw_check_for_break(LIN_HandleTypeDef* hlin);
 static uint8_t lin_data_layer_checksum(uint8_t pid, uint8_t length, const uint8_t* data_ptr);
-static void lin_erase_message_table(void);
-static void lin_disable_all_messages(void);
+static void lin_erase_slot_table(void);
+static void lin_disable_all_slots(void);
 static void lin_can_gateway_tx(LIN_HandleTypeDef* hlin);
 
 void lin_init(LIN_HandleTypeDef* hlin, uint8_t lin_instance, UART_HandleTypeDef* huart)
 {
-  /* erase the message table to ensure no random data */
-  lin_erase_message_table();  
+  /* erase the slot table to ensure no random data */
+  lin_erase_slot_table();  
 
   HAL_UART_Receive_IT(huart, hlin->UartRxBuffer, 1);
 
@@ -100,15 +97,15 @@ void lin_handle_uart_rx_IRQ(LIN_HandleTypeDef* hlin)
         /* based on the table this is either a master, slave, or monitor */
         hlin->lin_rx_timeout = HAL_GetTick() + LIN_RX_TIMEOUT_VALUE;
         hlin->lin_data_frame.pid = rbyte;
-        for (uint8_t lin_message_index = 0; lin_message_index < LIN_MAX_MESSAGE_ITEMS; lin_message_index++) {
-          if ((hlin->lin_data_frame.pid & LIN_ID_MASK) == lin_message_table[hlin->lin_instance][lin_message_index].PID  &&
-                (lin_message_table[hlin->lin_instance][lin_message_index].lin_msg_flags.is_active)) {
+        for (uint8_t lin_slot_index = 0; lin_slot_index < LIN_MAX_SLOT_ITEMS; lin_slot_index++) {
+          if ((hlin->lin_data_frame.pid & LIN_ID_MASK) == lin_slot_table[hlin->lin_instance][lin_slot_index].PID  &&
+                (lin_slot_table[hlin->lin_instance][lin_slot_index].lin_slot_flags.is_active)) {
             /* there is an instance in the table for this PID - handle based on the flags */
-            hlin->lin_msg_table_index = lin_message_index;
-            if (lin_message_table[hlin->lin_instance][lin_message_index].lin_msg_flags.lin_node_action == LIN_MONITOR) {
+            hlin->lin_slot_table_index = lin_slot_index;
+            if (lin_slot_table[hlin->lin_instance][lin_slot_index].lin_slot_flags.lin_node_action == LIN_MONITOR) {
               hlin->lin_state = LIN_MONITOR_RX_DATA;
             }
-            else if (lin_message_table[hlin->lin_instance][lin_message_index].lin_msg_flags.lin_node_action == LIN_SLAVE){
+            else if (lin_slot_table[hlin->lin_instance][lin_slot_index].lin_slot_flags.lin_node_action == LIN_SLAVE){
               hlin->lin_state = LIN_SLAVE_TX_DATA;
             }
             else {
@@ -173,11 +170,11 @@ void lin_handler_task(LIN_HandleTypeDef* hlin)
       /* we have RX'd a PID that we now need to respond to */
       /* need the table index that we used to trigger the PID */
       /* create a copy of the data length for readability */
-      data_length = lin_message_table[hlin->lin_instance][hlin->lin_msg_table_index].len;
+      data_length = lin_slot_table[hlin->lin_instance][hlin->lin_slot_table_index].len;
 
       /* grab the data from the table and load it into the buffer */
       for (data_index=0; data_index <  data_length; data_index++) {
-        tx_buffer[data_index] = lin_message_table[hlin->lin_instance][hlin->lin_msg_table_index].data[data_index];
+        tx_buffer[data_index] = lin_slot_table[hlin->lin_instance][hlin->lin_slot_table_index].data[data_index];
       }
 
       /* calculate the checksum */
@@ -215,48 +212,48 @@ uint8_t lin_config(uint32_t msg_id, uint8_t *data)
   lin_config_data.lin_cmd_type = data[0];
   lin_config_data.lin_channel = data[1];
   lin_config_data.lin_table_index = data[2];
-  lin_config_data.lin_data.lin_msg_flags.is_active = data[3];
-  lin_config_data.lin_data.lin_msg_flags.lin_node_action = data[4];
+  lin_config_data.lin_data.lin_slot_flags.is_active = data[3];
+  lin_config_data.lin_data.lin_slot_flags.lin_node_action = data[4];
   lin_config_data.lin_data.PID = data[5];
   lin_config_data.lin_data.len = data[6];
 
   switch (lin_config_data.lin_cmd_type) {
-    case LIN_CMD_LOAD_MSG:
-      /* load the message table with the passed data */ 	
-      lin_message_table[lin_config_data.lin_channel][lin_config_data.lin_table_index] = lin_config_data.lin_data;
+    case LIN_CMD_LOAD_SLOT:
+      /* load the slot table with the passed data */ 	
+      lin_slot_table[lin_config_data.lin_channel][lin_config_data.lin_table_index] = lin_config_data.lin_data;
       break;
       
-    case LIN_CMD_READ_MSG: 
-      /* read the data out of the message table and send it back to the host */
+    case LIN_CMD_READ_SLOT: 
+      /* read the data out of the slot table and send it back to the host */
       /* TODO: Figure out a good way to do this if it's really needed */
       break;
     
-    case LIN_CMD_ENABLE_MSG: 
-      /* set the flag to enable one message */
-      lin_message_table[lin_config_data.lin_channel][lin_config_data.lin_table_index].lin_msg_flags.is_active = 1;
+    case LIN_CMD_ENABLE_SLOT: 
+      /* set the flag to enable one slot */
+      lin_slot_table[lin_config_data.lin_channel][lin_config_data.lin_table_index].lin_slot_flags.is_active = 1;
       break;
 
-    case LIN_CMD_DISABLE_MSG: 
-      /* clear the flag to disable one message */
-      lin_message_table[lin_config_data.lin_channel][lin_config_data.lin_table_index].lin_msg_flags.is_active = 0;
+    case LIN_CMD_DISABLE_SLOT: 
+      /* clear the flag to disable one slot */
+      lin_slot_table[lin_config_data.lin_channel][lin_config_data.lin_table_index].lin_slot_flags.is_active = 0;
       break;
 
-    case LIN_CMD_DISABLE_ALL_MSGS:
-      lin_disable_all_messages();
+    case LIN_CMD_DISABLE_ALL_SLOTS:
+      lin_disable_all_slots();
       break;
 
-    case LIN_CMD_ERASE_ALL_MSGS:
-      lin_erase_message_table();
+    case LIN_CMD_ERASE_ALL_SLOTS:
+      lin_erase_slot_table();
       break;   
 
     case LIN_CMD_ENABLE_LIN:
       /* to do, need a lookup table to get the baud info */
-      //static void lin_usart_enable(LIN_USART_HW[lin_ctrl_message->LIN_Channel], NEED BAUD LOOKUP ETC.);
+      //static void lin_usart_enable(LIN_USART_HW[lin_ctrl_slot->LIN_Channel], NEED BAUD LOOKUP ETC.);
       break;  
     
     case LIN_CMD_DISABLE_LIN:
       /* to do, need a lookup table to get the pin info */
-      //lin_usart_disable(LIN_USART_HW[lin_ctrl_message->LIN_Channel], NEED PIN LOOKUP);
+      //lin_usart_disable(LIN_USART_HW[lin_ctrl_slot->LIN_Channel], NEED PIN LOOKUP);
       break;
  
     default:
@@ -266,28 +263,28 @@ uint8_t lin_config(uint32_t msg_id, uint8_t *data)
   return 0;
 }
 
-static void lin_erase_message_table(void)
+static void lin_erase_slot_table(void)
 {
-  /* routine to zero out all data in the message table */
+  /* routine to zero out all data in the slot table */
   for (uint8_t usart_chan = 0; usart_chan < LIN_MAX_USART_CHAN; usart_chan++) {
-    for (uint8_t lin_message_index = 0; lin_message_index < LIN_MAX_MESSAGE_ITEMS; lin_message_index++) {
-      lin_message_table[usart_chan][lin_message_index].lin_msg_flags.is_active = 0;
-      //lin_message_table[usart_chan][lin_message_index].lin_msg_flags.lin_node_action = US_LINMR_NACT_IGNORE;
-      lin_message_table[usart_chan][lin_message_index].PID = 0x00;
-      lin_message_table[usart_chan][lin_message_index].len = 0x00;
+    for (uint8_t lin_slot_index = 0; lin_slot_index < LIN_MAX_SLOT_ITEMS; lin_slot_index++) {
+      lin_slot_table[usart_chan][lin_slot_index].lin_slot_flags.is_active = 0;
+      //lin_slot_table[usart_chan][lin_slot_index].lin_slot_flags.lin_node_action = US_LINMR_NACT_IGNORE;
+      lin_slot_table[usart_chan][lin_slot_index].PID = 0x00;
+      lin_slot_table[usart_chan][lin_slot_index].len = 0x00;
       for (uint8_t data_index = 0; data_index <  LIN_MAX_DATA_BYTES; data_index++) {
-        lin_message_table[usart_chan][lin_message_index].data[data_index] = 0x00;
+        lin_slot_table[usart_chan][lin_slot_index].data[data_index] = 0x00;
       }
     }
   }
 }
 
-static void lin_disable_all_messages(void)
+static void lin_disable_all_slots(void)
 {
-  /* routine to disable all messages in the message table */
+  /* routine to disable all slots in the slot table */
   for (uint8_t usart_chan = 0; usart_chan < LIN_MAX_USART_CHAN; usart_chan++) {
-    for (uint8_t lin_message_index = 0; lin_message_index < LIN_MAX_MESSAGE_ITEMS; lin_message_index++) {
-      lin_message_table[usart_chan][lin_message_index].lin_msg_flags.is_active = 0;
+    for (uint8_t lin_slot_index = 0; lin_slot_index < LIN_MAX_SLOT_ITEMS; lin_slot_index++) {
+      lin_slot_table[usart_chan][lin_slot_index].lin_slot_flags.is_active = 0;
     }
   }
 }
