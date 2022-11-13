@@ -53,7 +53,10 @@ static lin_slot_data_t lin_slot_table[LIN_MAX_USART_CHAN][LIN_MAX_SLOT_ITEMS];
 static lin_config_t lin_config_data;
 
 extern LIN_HandleTypeDef hlin1;
-extern FDCAN_HandleTypeDef hfdcan1;
+
+#if defined (LIN_GATEWAY_CAN_CH)
+extern CAN_HANDLE_TYPEDEF LIN_GATEWAY_CAN_CH;
+#endif
 
 static FlagStatus lin_hw_check_for_break(LIN_HandleTypeDef* hlin);
 static uint8_t lin_data_layer_checksum(uint8_t pid, uint8_t length, const uint8_t* data_ptr);
