@@ -54,6 +54,7 @@ extern "C" {
 #define GS_HOST_FRAME_CLASSIC_CAN gs_host_frame_classic_can
 #else
 #define GS_HOST_FRAME gs_host_frame_classic_can
+#define GS_HOST_FRAME_CLASSIC_CAN gs_host_frame_classic_can
 #endif
 
 /* this exists here to prevent circular dependency with can.h */
