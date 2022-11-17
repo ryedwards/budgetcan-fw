@@ -83,7 +83,7 @@ C_SOURCES =  \
 
 # ASM sources
 ASM_SOURCES =  \
-startup_stm32g431xx.s
+startup_stm32g431c6tx.s
 
 #######################################
 # binaries
