@@ -77,7 +77,6 @@ extern "C" {
 #define FDCAN_TX_FIFO_ELEM_NUM_INIT     32
 #define FDCAN_TX_FIFO_ELEM_SZ_INIT      FDCAN_DATA_BYTES_64
 
-#define CANFD_SUPPORT     1
 #define CAN_NUM_CHANNELS  2
 #define CAN_CLOCK_SPEED   40000000
 

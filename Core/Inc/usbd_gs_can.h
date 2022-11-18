@@ -49,7 +49,7 @@ extern "C" {
 #define DFU_INTERFACE_STR_INDEX     0xE0
 
 /* Create a compile time define to reduce RAM use for non-CANFD codebases */
-#if defined(CANFD_SUPPORT)
+#if defined(FDCAN1)
 #define GS_HOST_FRAME gs_host_frame
 #define GS_HOST_FRAME_CLASSIC_CAN gs_host_frame_classic_can
 #else

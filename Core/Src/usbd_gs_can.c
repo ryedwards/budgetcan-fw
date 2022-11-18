@@ -246,7 +246,7 @@ static const struct gs_device_bt_const USBD_GS_CAN_btconst = {
   | GS_CAN_FEATURE_HW_TIMESTAMP
   | GS_CAN_FEATURE_IDENTIFY
   | GS_CAN_FEATURE_USER_ID
-#if defined(CANFD_SUPPORT)
+#if defined(FDCAN1)
   | GS_CAN_FEATURE_FD
   | GS_CAN_FEATURE_BT_CONST_EXT
 #endif
@@ -271,7 +271,7 @@ static const struct gs_device_bt_const_extended USBD_GS_CAN_btconst_extended = {
   | GS_CAN_FEATURE_HW_TIMESTAMP
   | GS_CAN_FEATURE_IDENTIFY
   | GS_CAN_FEATURE_USER_ID
-#if defined(CANFD_SUPPORT)
+#if defined(FDCAN1)
   | GS_CAN_FEATURE_FD
   | GS_CAN_FEATURE_BT_CONST_EXT
 #endif
@@ -608,7 +608,7 @@ static uint8_t USBD_GS_CAN_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
   USBD_GS_CAN_HandleTypeDef *hcan = (USBD_GS_CAN_HandleTypeDef*)pdev->pClassData;
 
  uint32_t rxlen = USBD_LL_GetRxDataSize(pdev, epnum);
-#if defined(CANFD_SUPPORT)
+#if defined(FDCAN1)
   if (rxlen < (sizeof(struct GS_HOST_FRAME_CLASSIC_CAN)-4)) {
 #else
   if (rxlen < (sizeof(struct GS_HOST_FRAME)-4)) {
@@ -668,7 +668,7 @@ uint8_t USBD_GS_CAN_SendFrame(USBD_HandleTypeDef *pdev, struct GS_HOST_FRAME *fr
   USBD_GS_CAN_HandleTypeDef *hcan = (USBD_GS_CAN_HandleTypeDef*)pdev->pClassData;
   size_t len = 0;
 
-  #if defined (CANFD_SUPPORT)
+  #if defined (FDCAN1)
     if (frame->flags & GS_CAN_FLAG_FD) {
       len = sizeof(struct GS_HOST_FRAME);
     }
