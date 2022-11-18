@@ -37,7 +37,22 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 #include "gs_usb.h"
-#include "usbd_gs_can.h"
+
+/* Create a compile time define to reduce RAM use for non-CANFD codebases */
+#if defined(FDCAN1)
+#define GS_HOST_FRAME gs_host_frame_canfd
+#define GS_HOST_FRAME_CLASSIC_CAN gs_host_frame
+#else
+#define GS_HOST_FRAME gs_host_frame
+#endif
+
+#if defined (FDCAN1)
+#define CAN_HANDLE_TYPEDEF  FDCAN_HandleTypeDef
+#define CAN_TYPEDEF         FDCAN_GlobalTypeDef
+#else
+#define CAN_HANDLE_TYPEDEF  CAN_HandleTypeDef
+#define CAN_TYPEDEF         CAN_TypeDef
+#endif
 
 /* Exported functions --------------------------------------------------------*/
 void can_init(CAN_HANDLE_TYPEDEF *hcan, CAN_TYPEDEF *instance);

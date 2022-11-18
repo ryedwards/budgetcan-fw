@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 /* Includes ------------------------------------------------------------------*/
 #include "board.h"
+#include "usbd_gs_can.h"
 #include "can.h"
 #include "led.h"
 

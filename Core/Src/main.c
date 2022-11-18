@@ -27,8 +27,8 @@
 #include "usbd_def.h"
 #include "usbd_desc.h"
 #include "usbd_core.h"
-#include "usbd_gs_can.h"
 #include "board.h"
+#include "usbd_gs_can.h"
 #include "can.h"
 #include "lin.h"
 /* USER CODE END Includes */
@@ -214,7 +214,7 @@ void task_main(void *argument)
 #if defined(LIN_SUPPORT)
       if (IS_LIN_FRAME((frame.can_id & 0x1FFFFFFF))) {
         /* this is a special case for setting up the LIN handler tables */
-        lin_config((frame.can_id & 0x1FFFFFFF), frame.classic_can.data);
+        lin_config((frame.can_id & 0x1FFFFFFF), frame.data);
         frame.flags = 0x0;
         frame.reserved = 0x0;
         xQueueSendToBack(queue_to_hostHandle, &frame, 0);

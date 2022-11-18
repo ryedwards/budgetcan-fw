@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include "board.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "usbd_gs_can.h"
 #include "can.h"
 #include "lin.h"
 #include "led.h"

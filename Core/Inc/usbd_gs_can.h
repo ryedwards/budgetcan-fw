@@ -39,6 +39,7 @@ extern "C" {
 #include "board.h"
 #include "usbd_def.h"
 #include "gs_usb.h"
+#include "can.h"
 
 /* Exported defines -----------------------------------------------------------*/
 #define CAN_DATA_MAX_PACKET_SIZE    64  /* Endpoint IN & OUT Packet size */
@@ -47,24 +48,6 @@ extern "C" {
 #define USBD_GS_CAN_VENDOR_CODE     0x20
 #define DFU_INTERFACE_NUM           1
 #define DFU_INTERFACE_STR_INDEX     0xE0
-
-/* Create a compile time define to reduce RAM use for non-CANFD codebases */
-#if defined(FDCAN1)
-#define GS_HOST_FRAME gs_host_frame
-#define GS_HOST_FRAME_CLASSIC_CAN gs_host_frame_classic_can
-#else
-#define GS_HOST_FRAME gs_host_frame_classic_can
-#define GS_HOST_FRAME_CLASSIC_CAN gs_host_frame_classic_can
-#endif
-
-/* this exists here to prevent circular dependency with can.h */
-#if defined (CAN)
-#define CAN_HANDLE_TYPEDEF  CAN_HandleTypeDef
-#define CAN_TYPEDEF         CAN_TypeDef
-#elif defined (FDCAN1)
-#define CAN_HANDLE_TYPEDEF  FDCAN_HandleTypeDef
-#define CAN_TYPEDEF         FDCAN_GlobalTypeDef
-#endif
 
 extern USBD_ClassTypeDef USBD_GS_CAN;
 

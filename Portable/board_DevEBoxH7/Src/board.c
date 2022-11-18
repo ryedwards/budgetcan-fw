@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "task.h"
+#include "usbd_gs_can.h"
 #include "can.h"
 #include "led.h"
 
@@ -163,14 +164,14 @@ static void task_my_program(void *argument)
       frame.channel = 0;
       frame.echo_id = 0xFFFFFFFF;
       frame.flags = 0;
-      frame.classic_can.data[0] = 0x11;
-      frame.classic_can.data[1] = 0x22;
-      frame.classic_can.data[2] = 0x34;
-      frame.classic_can.data[3] = 0x44;
-      frame.classic_can.data[4] = 0x55;
-      frame.classic_can.data[5] = 0x66;
-      frame.classic_can.data[6] = 0x77;
-      frame.classic_can.data[7] = 0x88;
+      frame.data[0] = 0x11;
+      frame.data[1] = 0x22;
+      frame.data[2] = 0x34;
+      frame.data[3] = 0x44;
+      frame.data[4] = 0x55;
+      frame.data[5] = 0x66;
+      frame.data[6] = 0x77;
+      frame.data[7] = 0x88;
       frame.timestamp_us = __HAL_TIM_GET_COUNTER(&htim2);
       if (host_channel_is_active) {
         xQueueSendToBack(queue_to_hostHandle, &frame, 0);
