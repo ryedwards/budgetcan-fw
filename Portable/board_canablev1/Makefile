@@ -36,22 +36,22 @@ BUILD_DIR = build
 ######################################
 # C sources
 C_SOURCES =  \
-../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal.c \
-../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_cortex.c \
-../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_can.c \
-../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_dma.c \
-../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_flash.c \
-../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_flash_ex.c \
-../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_gpio.c \
-../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_pcd.c \
-../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_pcd_ex.c \
-../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_pwr.c \
-../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_pwr_ex.c \
-../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_rcc.c \
-../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_rcc_ex.c \
-../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_tim.c \
-../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_tim_ex.c \
-../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_ll_usb.c \
+../../Drivers/stm32f0xx_hal_driver/Src/stm32f0xx_hal.c \
+../../Drivers/stm32f0xx_hal_driver/Src/stm32f0xx_hal_cortex.c \
+../../Drivers/stm32f0xx_hal_driver/Src/stm32f0xx_hal_can.c \
+../../Drivers/stm32f0xx_hal_driver/Src/stm32f0xx_hal_dma.c \
+../../Drivers/stm32f0xx_hal_driver/Src/stm32f0xx_hal_flash.c \
+../../Drivers/stm32f0xx_hal_driver/Src/stm32f0xx_hal_flash_ex.c \
+../../Drivers/stm32f0xx_hal_driver/Src/stm32f0xx_hal_gpio.c \
+../../Drivers/stm32f0xx_hal_driver/Src/stm32f0xx_hal_pcd.c \
+../../Drivers/stm32f0xx_hal_driver/Src/stm32f0xx_hal_pcd_ex.c \
+../../Drivers/stm32f0xx_hal_driver/Src/stm32f0xx_hal_pwr.c \
+../../Drivers/stm32f0xx_hal_driver/Src/stm32f0xx_hal_pwr_ex.c \
+../../Drivers/stm32f0xx_hal_driver/Src/stm32f0xx_hal_rcc.c \
+../../Drivers/stm32f0xx_hal_driver/Src/stm32f0xx_hal_rcc_ex.c \
+../../Drivers/stm32f0xx_hal_driver/Src/stm32f0xx_hal_tim.c \
+../../Drivers/stm32f0xx_hal_driver/Src/stm32f0xx_hal_tim_ex.c \
+../../Drivers/stm32f0xx_hal_driver/Src/stm32f0xx_ll_usb.c \
 ../../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c \
 ../../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c \
 ../../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c \
@@ -135,9 +135,9 @@ C_INCLUDES =  \
 -I../../Core/Inc \
 -I../../Portable/board_canablev1/Inc \
 -I../../Drivers/CMSIS/Include \
--I../../Drivers/STM32F0xx_HAL_Driver/Inc \
--I../../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy \
--I../../Drivers/CMSIS_DEVICE_F0/Include \
+-I../../Drivers/stm32f0xx_hal_driver/Inc \
+-I../../Drivers/stm32f0xx_hal_driver/Inc/Legacy \
+-I../../Drivers/cmsis_device_f0/Include \
 -I../../Drivers/CMSIS/Include \
 -I../../Middlewares/ST/STM32_USB_Device_Library/Core/Inc \
 -I../../Middlewares/Third_Party/FreeRTOS/include \
