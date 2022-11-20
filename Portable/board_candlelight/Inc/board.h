@@ -65,6 +65,8 @@ extern "C" {
 #define QUEUE_SIZE_HOST_TO_DEV    32
 #define QUEUE_SIZE_DEV_TO_HOST    32
 
+#define CAN_nSTANDBY_Pin GPIO_PIN_13
+#define CAN_nSTANDBY_GPIO_Port GPIOC
 #define LED_RX_Pin GPIO_PIN_0
 #define LED_RX_GPIO_Port GPIOA
 #define LED_TX_Pin GPIO_PIN_1

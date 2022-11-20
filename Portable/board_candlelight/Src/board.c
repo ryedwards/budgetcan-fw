@@ -86,11 +86,22 @@ void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(CAN_nSTANDBY_GPIO_Port, CAN_nSTANDBY_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, LED_RX_Pin|LED_TX_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : CAN_nSTANDBY_Pin */
+  GPIO_InitStruct.Pin = CAN_nSTANDBY_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(CAN_nSTANDBY_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : LED_RX_Pin LED_TX_Pin */
   GPIO_InitStruct.Pin = LED_RX_Pin|LED_TX_Pin;
@@ -140,6 +151,7 @@ void main_task_cb(void)
 void can_on_enable_cb(uint8_t channel)
 {
   UNUSED(channel);
+  HAL_GPIO_WritePin(CAN_nSTANDBY_GPIO_Port, CAN_nSTANDBY_Pin, GPIO_PIN_RESET);
 }
 
 /** @brief Function called when the CAN is disabled for this channel
@@ -149,6 +161,7 @@ void can_on_enable_cb(uint8_t channel)
 void can_on_disable_cb(uint8_t channel)
 {
   UNUSED(channel);
+  HAL_GPIO_WritePin(CAN_nSTANDBY_GPIO_Port, CAN_nSTANDBY_Pin, GPIO_PIN_SET);
 }
 
 /** @brief Function called when a CAN frame is send on this channel
