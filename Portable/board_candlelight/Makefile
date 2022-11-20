@@ -51,6 +51,8 @@ C_SOURCES =  \
 ../../Drivers/stm32f0xx_hal_driver/Src/stm32f0xx_hal_rcc_ex.c \
 ../../Drivers/stm32f0xx_hal_driver/Src/stm32f0xx_hal_tim.c \
 ../../Drivers/stm32f0xx_hal_driver/Src/stm32f0xx_hal_tim_ex.c \
+../../Drivers/stm32f0xx_hal_driver/Src/stm32f0xx_hal_uart.c \
+../../Drivers/stm32f0xx_hal_driver/Src/stm32f0xx_hal_uart_ex.c \
 ../../Drivers/stm32f0xx_hal_driver/Src/stm32f0xx_ll_usb.c \
 ../../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c \
 ../../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c \
