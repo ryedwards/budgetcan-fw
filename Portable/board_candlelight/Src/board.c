@@ -26,14 +26,29 @@ THE SOFTWARE.
 
 /* Includes ------------------------------------------------------------------*/
 #include "board.h"
+#include "FreeRTOS.h"
+#include "stream_buffer.h"
 #include "usbd_gs_can.h"
 #include "can.h"
 #include "led.h"
 
+#define IS_IRQ_MODE()             ( (SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) != 0)
+
+#define STREAM_BUFFER_UART1_RX_SIZEBYTES     100U
+#define STREAM_BUFFER_UART1_RX_TRIGGERLEVEL  10U
+#define STREAM_BUFFER_UART1_TX_SIZEBYTES     100U
+#define STREAM_BUFFER_UART1_TX_TRIGGERLEVEL  10U
+
+static StreamBufferHandle_t stream_buffer_uart1_rx;
+static StreamBufferHandle_t stream_buffer_uart1_tx;
+
 LED_HandleTypeDef hledrx;
 LED_HandleTypeDef hledtx;
 
+UART_HandleTypeDef huart1;
 CAN_HandleTypeDef hcan;
+
+uint8_t uart1_rx_buffer[1] = {0};
 
 extern USBD_GS_CAN_HandleTypeDef hGS_CAN;
 
@@ -70,7 +85,8 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USB;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USB|RCC_PERIPHCLK_USART1;
+  PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK1;
   PeriphClkInit.UsbClockSelection = RCC_USBCLKSOURCE_HSI48;
 
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
@@ -111,12 +127,71 @@ void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 }
 
-/** @brief Function to init all of the LEDs that this board supports
- *  @param None
- *  @retval None
+/**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 115200;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+/*
+ * UART IRQ CALLBACKS
  */
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+  uint8_t uart1_tx_buffer[16]; /* only send up to 16 bytes at a time */
+  if (huart->Instance == USART1) {
+    if (!xStreamBufferIsEmpty(stream_buffer_uart1_tx)) {
+      /* there is data in the stream buffer that needs to be TX'd */
+      uint8_t num_bytes = xStreamBufferReceiveFromISR(stream_buffer_uart1_tx, uart1_tx_buffer, sizeof(uart1_tx_buffer), NULL);
+      HAL_UART_Transmit_IT(huart, uart1_tx_buffer, num_bytes);
+    }
+  }
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  /* only read 1 byte at a time since we don't have a defined data type */
+  if (huart->Instance == USART1) {
+    xStreamBufferSendFromISR(stream_buffer_uart1_rx, uart1_rx_buffer, 1, NULL);
+    /* Set up for the next RX byte */
+    HAL_UART_Receive_IT(huart, &uart1_rx_buffer[0], 1);
+  }
+}
+
+int __io_putchar(int ch)
+{
+  if (HAL_UART_Transmit_IT(&huart1, (uint8_t *)&ch, 1) == HAL_BUSY) {
+    if (IS_IRQ_MODE()) {
+      xStreamBufferSendFromISR(stream_buffer_uart1_tx,(uint8_t *)&ch, 1, NULL);
+    }
+    else {
+      xStreamBufferSend(stream_buffer_uart1_tx,(uint8_t *)&ch, 1, 0);
+    }
+  }
+  return ch;
+}
+
 void main_init_cb(void)
 {
+  MX_USART1_UART_Init();
+
   /* carry over the LED blink from original firmware */
   for (uint8_t i=0; i<10; i++)
 	{
@@ -131,12 +206,17 @@ void main_init_cb(void)
   led_init(&hledrx, LED_RX_GPIO_Port, LED_RX_Pin, LED_MODE_INACTIVE, LED_ACTIVE_HIGH);
   led_init(&hledtx, LED_TX_GPIO_Port, LED_TX_Pin, LED_MODE_INACTIVE, LED_ACTIVE_HIGH);
 
+  HAL_UART_Receive_IT(&huart1, &uart1_rx_buffer[0], 1);
 }
 
-/** @brief Function to periodically update any features on the board from the main task
- *  @param None
- *  @retval None
- */
+void main_rtos_init_cb(void)
+{
+  stream_buffer_uart1_rx = xStreamBufferCreate(STREAM_BUFFER_UART1_RX_SIZEBYTES,
+                                                  STREAM_BUFFER_UART1_RX_TRIGGERLEVEL);
+  stream_buffer_uart1_tx = xStreamBufferCreate(STREAM_BUFFER_UART1_TX_SIZEBYTES,
+                                                STREAM_BUFFER_UART1_TX_TRIGGERLEVEL);
+}
+
 void main_task_cb(void)
 {
   /* update all the LEDs */
@@ -144,30 +224,20 @@ void main_task_cb(void)
   led_update(&hledtx);
 }
 
-/** @brief Function called when the CAN is enabled for this channel
- *  @param uint8_t channel - The CAN channel (0 based)
- *  @retval None
- */
 void can_on_enable_cb(uint8_t channel)
 {
   UNUSED(channel);
   HAL_GPIO_WritePin(CAN_nSTANDBY_GPIO_Port, CAN_nSTANDBY_Pin, GPIO_PIN_RESET);
+  printf("CAN enabled");
 }
 
-/** @brief Function called when the CAN is disabled for this channel
- *  @param uint8_t channel - The CAN channel (0 based)
- *  @retval None
- */
 void can_on_disable_cb(uint8_t channel)
 {
   UNUSED(channel);
   HAL_GPIO_WritePin(CAN_nSTANDBY_GPIO_Port, CAN_nSTANDBY_Pin, GPIO_PIN_SET);
+  printf("CAN diabled");
 }
 
-/** @brief Function called when a CAN frame is send on this channel
- *  @param uint8_t channel - The CAN channel (0 based)
- *  @retval None
- */
 void can_on_tx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
 {
   UNUSED(channel);
@@ -175,10 +245,6 @@ void can_on_tx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
   led_indicate_rxtx(&hledtx);
 }
 
-/** @brief Function called when a CAN frame is received on this channel
- *  @param uint8_t channel - The CAN channel (0 based)
- *  @retval None
- */
 void can_on_rx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
 {
   UNUSED(channel);
