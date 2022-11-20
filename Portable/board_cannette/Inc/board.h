@@ -71,8 +71,8 @@ extern "C" {
 #define CAN_nSTANDBY_GPIO_Port GPIOC
 #define nDCDC_EN_Pin GPIO_PIN_15
 #define nDCDC_EN_GPIO_Port GPIOC
-#define SENSE_5V_ADC_Pin GPIO_PIN_5
-#define SENSE_5V_ADC_GPIO_Port GPIOA
+#define SENSE_5V_Pin GPIO_PIN_5
+#define SENSE_5V_GPIO_Port GPIOA
 #define LED_TX_Pin GPIO_PIN_8
 #define LED_TX_GPIO_Port GPIOA
 #define LED_RX_Pin GPIO_PIN_9
