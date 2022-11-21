@@ -113,7 +113,7 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, FDCAN1_SLEEP_EN_Pin|FDCAN1_TERM_EN_Pin|FDCAN2_SLEEP_EN_Pin|FDCAN2_TERM_EN_Pin
+  HAL_GPIO_WritePin(GPIOA, FDCAN1_nSTANDBY_Pin|FDCAN1_TERM_EN_Pin|FDCAN2_nSTANDBY_Pin|FDCAN2_TERM_EN_Pin
                           |SWCAN_M0_Pin|SWCAN_M1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
@@ -122,9 +122,9 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LED3_Pin|LED2_Pin|LED1_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : FDCAN1_SLEEP_EN_Pin FDCAN1_TERM_EN_Pin FDCAN2_SLEEP_EN_Pin FDCAN2_TERM_EN_Pin
+  /*Configure GPIO pins : FDCAN1_nSTANDBY_Pin FDCAN1_TERM_EN_Pin FDCAN2_nSTANDBY_Pin FDCAN2_TERM_EN_Pin
                            SWCAN_M0_Pin SWCAN_M1_Pin */
-  GPIO_InitStruct.Pin = FDCAN1_SLEEP_EN_Pin|FDCAN1_TERM_EN_Pin|FDCAN2_SLEEP_EN_Pin|FDCAN2_TERM_EN_Pin
+  GPIO_InitStruct.Pin = FDCAN1_nSTANDBY_Pin|FDCAN1_TERM_EN_Pin|FDCAN2_nSTANDBY_Pin|FDCAN2_TERM_EN_Pin
                           |SWCAN_M0_Pin|SWCAN_M1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -221,6 +221,15 @@ static void task_lin(void *argument)
 
 void main_init_cb(void)
 {
+  
+  for (uint8_t i=0; i<20; i++)
+	{
+		HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+		HAL_Delay(50);
+		HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);
+    HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
+	}
+
   hGS_CAN.channels[0] = &hfdcan1;
   hGS_CAN.channels[1] = &hfdcan2;
   can_init(hGS_CAN.channels[0], FDCAN1);
@@ -248,10 +257,10 @@ void main_task_cb(void)
 void can_on_enable_cb(uint8_t channel)
 {
   if (channel == 0) {
-    HAL_GPIO_WritePin(FDCAN1_SLEEP_EN_GPIO_Port, FDCAN1_SLEEP_EN_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(FDCAN1_nSTANDBY_GPIO_Port, FDCAN1_nSTANDBY_Pin, GPIO_PIN_RESET);
   }
   if (channel == 1) {
-    HAL_GPIO_WritePin(FDCAN2_SLEEP_EN_GPIO_Port, FDCAN2_SLEEP_EN_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(FDCAN2_nSTANDBY_GPIO_Port, FDCAN2_nSTANDBY_Pin, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(SWCAN_M0_GPIO_Port, SWCAN_M0_Pin, GPIO_PIN_SET);
     HAL_GPIO_WritePin(SWCAN_M1_GPIO_Port, SWCAN_M1_Pin, GPIO_PIN_SET);
   }
@@ -261,10 +270,10 @@ void can_on_enable_cb(uint8_t channel)
 void can_on_disable_cb(uint8_t channel)
 {
   if (channel == 0) {
-    HAL_GPIO_WritePin(FDCAN1_SLEEP_EN_GPIO_Port, FDCAN1_SLEEP_EN_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(FDCAN1_nSTANDBY_GPIO_Port, FDCAN1_nSTANDBY_Pin, GPIO_PIN_SET);
   }
   if (channel == 1) {
-    HAL_GPIO_WritePin(FDCAN2_SLEEP_EN_GPIO_Port, FDCAN2_SLEEP_EN_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(FDCAN2_nSTANDBY_GPIO_Port, FDCAN2_nSTANDBY_Pin, GPIO_PIN_SET);
     HAL_GPIO_WritePin(SWCAN_M0_GPIO_Port, SWCAN_M0_Pin, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(SWCAN_M1_GPIO_Port, SWCAN_M1_Pin, GPIO_PIN_RESET);
   }
