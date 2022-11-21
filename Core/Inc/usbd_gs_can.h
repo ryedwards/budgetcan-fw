@@ -56,7 +56,7 @@ typedef struct {
   uint8_t ep0_buf[CAN_CMD_PACKET_SIZE];
   __IO uint32_t TxState;
   USBD_SetupReqTypedef last_setup_request;
-  struct gs_host_frame from_host_frame;
+  struct GS_HOST_FRAME from_host_frame;
   CAN_HANDLE_TYPEDEF *channels[CAN_NUM_CHANNELS];
   bool dfu_detach_requested;
   bool pad_pkts_to_max_pkt_size;
