@@ -299,6 +299,7 @@ bool can_send(CAN_HANDLE_TYPEDEF *hcan, struct GS_HOST_FRAME *frame)
 {
 #if defined(CAN)
   CAN_TxHeaderTypeDef TxHeader;
+  uint32_t TxMailbox;
 
   TxHeader.StdId = frame->can_id & 0x7FF;
   TxHeader.ExtId = frame->can_id & 0x1FFFFFFF;
@@ -307,7 +308,7 @@ bool can_send(CAN_HANDLE_TYPEDEF *hcan, struct GS_HOST_FRAME *frame)
   TxHeader.DLC = frame->can_dlc;
   TxHeader.TransmitGlobalTime = DISABLE;
 
-  if (HAL_CAN_AddTxMessage(hcan, &TxHeader, (uint8_t*)frame->data, NULL) != HAL_OK) {
+  if (HAL_CAN_AddTxMessage(hcan, &TxHeader, (uint8_t*)frame->data, &TxMailbox) != HAL_OK) {
     return false;
   }
   else {
