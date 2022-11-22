@@ -254,7 +254,8 @@ void task_main(void *argument)
     /* callback function to the board to allow main task routines */
     main_task_cb();
 
-    vTaskDelay(1);
+    /* Allow other lower priority tasks to run as needed */
+    taskYIELD();
   }
 }
 
