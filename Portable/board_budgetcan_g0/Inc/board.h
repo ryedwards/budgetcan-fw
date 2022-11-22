@@ -70,6 +70,7 @@ extern "C" {
 #define CAN_TERM_SUPPORT  1
 #define CAN_NUM_CHANNELS  2
 #define CAN_CLOCK_SPEED   64000000
+#define CANFD_FEATURE     1
 
 #define LIN_SUPPORT       1
 #define LIN1_UART         UART1

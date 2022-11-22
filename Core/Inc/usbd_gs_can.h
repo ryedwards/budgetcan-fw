@@ -51,7 +51,11 @@ extern "C" {
 
 extern USBD_ClassTypeDef USBD_GS_CAN;
 
-#if defined(FDCAN1)
+
+#if defined(CANFD_FEATURE)
+#if !defined(FDCAN1)
+#error This CAN type does not support CANFD!!!
+#endif
 #define GS_HOST_FRAME_SIZE struct_size((struct gs_host_frame *)NULL, canfd_ts, 1)
 #define GS_HOST_CLASSIC_FRAME_SIZE struct_size((struct gs_host_frame *)NULL, classic_can_ts, 1)
 #else
