@@ -244,7 +244,6 @@ void task_main(void *argument)
     if (uxQueueSpacesAvailable(queue_to_hostHandle) == 0  ||
         uxQueueSpacesAvailable(queue_from_hostHandle) == 0) {
       /* TODO: we should probably shut down CAN and start over?? */
-      Error_Handler();
     }
 
     /* check for DFU update flag and kick to bootloader if set */
