@@ -119,7 +119,7 @@ void main_init_cb(void)
   can_init(hGS_CAN.channels[0], CAN);
 
   led_init(&hled1, LED1_GPIO_Port, LED1_Pin, LED_MODE_INACTIVE, LED_ACTIVE_HIGH);
-  led_init(&hled2, LED2_GPIO_Port, LED2_Pin, LED_MODE_INACTIVE, LED_ACTIVE_HIGH);
+  led_init(&hled2, LED2_GPIO_Port, LED2_Pin, LED_MODE_ACTIVE, LED_ACTIVE_HIGH);
 
 }
 
@@ -141,7 +141,8 @@ void main_task_cb(void)
 void can_on_enable_cb(uint8_t channel)
 {
   UNUSED(channel);
-  led_set_active(&hled2);
+  led_set_inactive(&hled2);
+  led_set_active(&hled1);
 }
 
 /** @brief Function called when the CAN is disabled for this channel
@@ -151,7 +152,8 @@ void can_on_enable_cb(uint8_t channel)
 void can_on_disable_cb(uint8_t channel)
 {
   UNUSED(channel);
-  led_set_inactive(&hled2);
+  led_set_active(&hled2);
+  led_set_inactive(&hled1);
 }
 
 /** @brief Function called when a CAN frame is send on this channel
@@ -162,7 +164,7 @@ void can_on_tx_cb(uint8_t channel, struct gs_host_frame *frame)
 {
   UNUSED(channel);
   UNUSED(frame);
-  led_indicate_rxtx(&hled1);
+  led_indicate_rxtx(&hled2);
 }
 
 /** @brief Function called when a CAN frame is received on this channel

@@ -65,6 +65,9 @@ extern "C" {
 #define QUEUE_SIZE_HOST_TO_DEV    32
 #define QUEUE_SIZE_DEV_TO_HOST    32
 
+#define LED_RXTX_ACTIVE_TIME_MS     30U
+#define LED_RXTX_INACTIVE_TIME_MS   30U
+
 #define LED1_Pin GPIO_PIN_0
 #define LED1_GPIO_Port GPIOB
 #define LED2_Pin GPIO_PIN_1
