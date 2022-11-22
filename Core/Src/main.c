@@ -225,7 +225,7 @@ void task_main(void *argument)
         /* Echo sent frame back to host */
         frame_object.frame.flags = 0x0;
         frame_object.frame.reserved = 0x0;
-        xQueueSendToBack(queue_to_hostHandle, &frame_object.frame, 0);
+        xQueueSendToFront(queue_to_hostHandle, &frame_object.frame, 0);
       }
       else {
         /* throw the message back onto the queue */
