@@ -353,7 +353,7 @@ bool can_send(CAN_HANDLE_TYPEDEF *hcan, struct gs_host_frame *frame)
     TxHeader.FDFormat = FDCAN_CLASSIC_CAN;
   }
 
-  if (HAL_FDCAN_AddMessageToTxFifoQ(hcan, &TxHeader, (uint8_t*)frame->canfd->data) != HAL_OK) {
+  if (HAL_FDCAN_AddMessageToTxFifoQ(hcan, &TxHeader, (uint8_t*)frame->classic_can->data) != HAL_OK) {
     return false;
   }
   else {
@@ -482,7 +482,7 @@ void HAL_FDCAN_RxFifo0Callback(CAN_HANDLE_TYPEDEF *hcan, uint32_t RxFifo0ITs)
 #if defined(CAN)
 void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan)
 {
-  struct gs_host_frame_object frame_object;
+  static struct gs_host_frame_object frame_object;
   uint32_t can_err_status = hcan->Instance->ESR;
   can_parse_error_status(can_err_status, can_last_err_status, hcan, &frame_object.frame);
   /* put this CAN message into the queue to send to host */
@@ -494,11 +494,11 @@ void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan)
 void HAL_FDCAN_ErrorStatusCallback(CAN_HANDLE_TYPEDEF *hcan, uint32_t ErrorStatusITs)
 {
   UNUSED(ErrorStatusITs);
-  struct gs_host_frame frame;
+  static struct gs_host_frame_object frame_object;
   uint32_t can_err_status = hcan->Instance->PSR;
-  can_parse_error_status(can_err_status, can_last_err_status, hcan, &frame);
+  can_parse_error_status(can_err_status, can_last_err_status, hcan, &frame_object.frame);
   /* put this CAN message into the queue to send to host */
-  xQueueSendToBackFromISR(queue_to_hostHandle, &frame, NULL);
+  xQueueSendToBackFromISR(queue_to_hostHandle, &frame_object.frame, NULL);
   can_last_err_status = can_err_status;
 }
 #endif
