@@ -38,14 +38,6 @@ extern "C" {
 #include <stdbool.h>
 #include "gs_usb.h"
 
-/* Create a compile time define to reduce RAM use for non-CANFD codebases */
-#if defined(FDCAN1)
-#define GS_HOST_FRAME gs_host_frame_canfd
-#define GS_HOST_FRAME_CLASSIC_CAN gs_host_frame
-#else
-#define GS_HOST_FRAME gs_host_frame
-#endif
-
 #if defined (FDCAN1)
 #define CAN_HANDLE_TYPEDEF  FDCAN_HandleTypeDef
 #define CAN_TYPEDEF         FDCAN_GlobalTypeDef
@@ -61,14 +53,14 @@ void can_set_data_bittiming(CAN_HANDLE_TYPEDEF *hcan, uint16_t brp, uint8_t phas
 void can_enable(CAN_HANDLE_TYPEDEF *hcan, bool loop_back, bool listen_only, bool one_shot, bool can_mode_fd);
 void can_disable(CAN_HANDLE_TYPEDEF *hcan);
 bool can_is_enabled(CAN_HANDLE_TYPEDEF *hcan);
-bool can_send(CAN_HANDLE_TYPEDEF *hcan, struct GS_HOST_FRAME *frame);
+bool can_send(CAN_HANDLE_TYPEDEF *hcan, struct gs_host_frame *frame);
 void can_set_termination(uint8_t channel, uint8_t value);
 uint8_t can_get_termination(uint8_t channel);
 
 void can_on_enable_cb(uint8_t channel);
 void can_on_disable_cb(uint8_t channel);
-void can_on_tx_cb(uint8_t channel, struct GS_HOST_FRAME *frame);
-void can_on_rx_cb(uint8_t channel, struct GS_HOST_FRAME *frame);
+void can_on_tx_cb(uint8_t channel, struct gs_host_frame *frame);
+void can_on_rx_cb(uint8_t channel, struct gs_host_frame *frame);
 void can_identify_cb(uint32_t do_identify);
 void can_set_term_cb(uint8_t channel, GPIO_PinState state);
 GPIO_PinState can_get_term_cb(uint8_t channel);

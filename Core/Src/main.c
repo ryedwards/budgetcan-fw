@@ -126,8 +126,8 @@ int main(void)
               TASK_MAIN_STACK_PRIORITY, &xCreatedMainTask);
 
   /* Init the RTOS streams and queues */
-  queue_from_hostHandle = xQueueCreate(QUEUE_SIZE_HOST_TO_DEV, sizeof(struct GS_HOST_FRAME));
-  queue_to_hostHandle = xQueueCreate(QUEUE_SIZE_DEV_TO_HOST, sizeof(struct GS_HOST_FRAME));
+  queue_from_hostHandle = xQueueCreate(QUEUE_SIZE_HOST_TO_DEV, sizeof(struct gs_host_frame));
+  queue_to_hostHandle = xQueueCreate(QUEUE_SIZE_DEV_TO_HOST, sizeof(struct gs_host_frame));
 
   /* Start scheduler */
   vTaskStartScheduler();
@@ -199,7 +199,7 @@ static void MX_TIM2_Init(void)
 void task_main(void *argument)
 {
   UNUSED(argument);
-  struct GS_HOST_FRAME frame;
+  static struct gs_host_frame_object frame_object;
 
   USBD_Init(&hUSB, (USBD_DescriptorsTypeDef*)&FS_Desc, DEVICE_FS);
   USBD_RegisterClass(&hUSB, &USBD_GS_CAN);
@@ -210,41 +210,41 @@ void task_main(void *argument)
   for(;;)
   {
     /* Check the queue to see if we have data FROM the host to handle */
-    if (xQueueReceive(queue_from_hostHandle, &frame, 0) == pdPASS){
+    if (xQueueReceive(queue_from_hostHandle, &frame_object.frame, 0) == pdPASS){
 #if defined(LIN_SUPPORT)
-      if (IS_LIN_FRAME((frame.can_id & 0x1FFFFFFF))) {
+      if (IS_LIN_FRAME((frame_object.frame.can_id & 0x1FFFFFFF))) {
         /* this is a special case for setting up the LIN handler tables */
-        lin_config((frame.can_id & 0x1FFFFFFF), frame.data);
-        frame.flags = 0x0;
-        frame.reserved = 0x0;
-        xQueueSendToBack(queue_to_hostHandle, &frame, 0);
+        lin_config((frame_object.frame.can_id & 0x1FFFFFFF), frame_object.frame.classic_can->data);
+        frame_object.frame.flags = 0x0;
+        frame_object.frame.reserved = 0x0;
+        xQueueSendToBack(queue_to_hostHandle, &frame_object.frame, 0);
         continue; /* just loop again so below code runs normally */
       }
 #endif /* LIN_SUPPORT */
-      if (can_send(hGS_CAN.channels[frame.channel], &frame)) {
+      if (can_send(hGS_CAN.channels[frame_object.frame.channel], &frame_object.frame)) {
         /* Echo sent frame back to host */
-        frame.flags = 0x0;
-        frame.reserved = 0x0;
-        xQueueSendToBack(queue_to_hostHandle, &frame, 0);
+        frame_object.frame.flags = 0x0;
+        frame_object.frame.reserved = 0x0;
+        xQueueSendToBack(queue_to_hostHandle, &frame_object.frame, 0);
       }
       else {
         /* throw the message back onto the queue */
-        xQueueSendToFront(queue_from_hostHandle, &frame, 0);
+        xQueueSendToFront(queue_from_hostHandle, &frame_object.frame, 0);
       }
     }
 
     /* Check the queue to see if we have data TO the host to handle */
-    if (xQueueReceive(queue_to_hostHandle, &frame, 0) == pdPASS) {
-      if (USBD_GS_CAN_SendFrame(&hUSB, &frame) != USBD_OK) {
+    if (xQueueReceive(queue_to_hostHandle, &frame_object.frame, 0) == pdPASS) {
+      if (USBD_GS_CAN_SendFrame(&hUSB, &frame_object.frame) != USBD_OK) {
         /* throw the message back onto the queue */
-        xQueueSendToFront(queue_to_hostHandle, &frame, 0);
+        xQueueSendToFront(queue_to_hostHandle, &frame_object.frame, 0);
       }
     }
 
     if (uxQueueSpacesAvailable(queue_to_hostHandle) == 0  ||
         uxQueueSpacesAvailable(queue_from_hostHandle) == 0) {
       /* TODO: we should probably shut down CAN and start over?? */
-      
+      Error_Handler();
     }
 
     /* check for DFU update flag and kick to bootloader if set */

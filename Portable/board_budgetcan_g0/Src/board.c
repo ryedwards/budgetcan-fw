@@ -280,14 +280,14 @@ void can_on_disable_cb(uint8_t channel)
   led_set_inactive(&hled3);
 }
 
-void can_on_tx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
+void can_on_tx_cb(uint8_t channel, struct gs_host_frame *frame)
 {
   UNUSED(channel);
   UNUSED(frame);
   led_indicate_rxtx(&hled1);
 }
 
-void can_on_rx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
+void can_on_rx_cb(uint8_t channel, struct gs_host_frame *frame)
 {
   UNUSED(channel);
   UNUSED(frame);

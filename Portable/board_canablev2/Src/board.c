@@ -163,7 +163,7 @@ void main_task_cb(void)
  *  @param uint8_t channel - The CAN channel (0 based)
  *  @retval None
  */
-void can_on_tx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
+void can_on_tx_cb(uint8_t channel, struct gs_host_frame *frame)
 {
   UNUSED(channel);
   UNUSED(frame);
@@ -174,7 +174,7 @@ void can_on_tx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
  *  @param uint8_t channel - The CAN channel (0 based)
  *  @retval None
  */
-void can_on_rx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
+void can_on_rx_cb(uint8_t channel, struct gs_host_frame *frame)
 {
   UNUSED(channel);
   UNUSED(frame);

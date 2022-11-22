@@ -51,12 +51,26 @@ extern "C" {
 
 extern USBD_ClassTypeDef USBD_GS_CAN;
 
+#if defined(FDCAN1)
+#define GS_HOST_FRAME_SIZE struct_size((struct gs_host_frame *)NULL, canfd_ts, 1)
+#define GS_HOST_CLASSIC_FRAME_SIZE struct_size((struct gs_host_frame *)NULL, classic_can_ts, 1)
+#else
+#define GS_HOST_FRAME_SIZE struct_size((struct gs_host_frame *)NULL, classic_can_ts, 1)
+#endif
+
+struct gs_host_frame_object {
+	union {
+		uint8_t _buf[GS_HOST_FRAME_SIZE];
+		struct gs_host_frame frame;
+	};
+};
+
 /* Exported types ------------------------------------------------------------*/
 typedef struct {
   uint8_t ep0_buf[CAN_CMD_PACKET_SIZE];
   __IO uint32_t TxState;
   USBD_SetupReqTypedef last_setup_request;
-  struct GS_HOST_FRAME from_host_frame;
+  struct gs_host_frame_object from_host_frame;
   CAN_HANDLE_TYPEDEF *channels[CAN_NUM_CHANNELS];
   bool dfu_detach_requested;
   bool pad_pkts_to_max_pkt_size;
@@ -73,7 +87,7 @@ uint8_t USBD_GS_CAN_PrepareReceive(USBD_HandleTypeDef *pdev);
 bool USBD_GS_CAN_CustomDeviceRequest(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
 bool USBD_GS_CAN_CustomInterfaceRequest(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
 bool USBD_GS_CAN_DfuDetachRequested(USBD_HandleTypeDef *pdev);
-uint8_t USBD_GS_CAN_SendFrame(USBD_HandleTypeDef *pdev, struct GS_HOST_FRAME *frame);
+uint8_t USBD_GS_CAN_SendFrame(USBD_HandleTypeDef *pdev, struct gs_host_frame *frame);
 uint8_t USBD_GS_CAN_Transmit(USBD_HandleTypeDef *pdev, uint8_t *buf, uint16_t len);
 
 #ifdef __cplusplus

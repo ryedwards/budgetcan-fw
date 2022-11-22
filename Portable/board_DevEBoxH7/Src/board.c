@@ -152,29 +152,29 @@ static void task_my_program(void *argument)
   UNUSED(argument);
   
   uint8_t prev_pressed_state = GPIO_PIN_SET;
-
+  static struct gs_host_frame_object frame_object;
   /* Infinite loop */
   for(;;) {
     /* if GPIO is pressed then send*/
     if (HAL_GPIO_ReadPin(USER_BTN_K1_GPIO_Port, USER_BTN_K1_Pin) == GPIO_PIN_RESET && prev_pressed_state != GPIO_PIN_RESET) {
       prev_pressed_state = GPIO_PIN_RESET;
-      struct GS_HOST_FRAME frame = {0};
-      frame.can_dlc = 8;
-      frame.can_id = 0x123;
-      frame.channel = 0;
-      frame.echo_id = 0xFFFFFFFF;
-      frame.flags = 0;
-      frame.data[0] = 0x11;
-      frame.data[1] = 0x22;
-      frame.data[2] = 0x34;
-      frame.data[3] = 0x44;
-      frame.data[4] = 0x55;
-      frame.data[5] = 0x66;
-      frame.data[6] = 0x77;
-      frame.data[7] = 0x88;
-      frame.timestamp_us = __HAL_TIM_GET_COUNTER(&htim2);
+
+      frame_object.frame.can_dlc = 8;
+      frame_object.frame.can_id = 0x123;
+      frame_object.frame.channel = 0;
+      frame_object.frame.echo_id = 0xFFFFFFFF;
+      frame_object.frame.flags = 0;
+      frame_object.frame.classic_can->data[0] = 0x11;
+      frame_object.frame.classic_can->data[1] = 0x22;
+      frame_object.frame.classic_can->data[2] = 0x34;
+      frame_object.frame.classic_can->data[3] = 0x44;
+      frame_object.frame.classic_can->data[4] = 0x55;
+      frame_object.frame.classic_can->data[5] = 0x66;
+      frame_object.frame.classic_can->data[6] = 0x77;
+      frame_object.frame.classic_can->data[7] = 0x88;
+      frame_object.frame.classic_can_ts->timestamp_us = __HAL_TIM_GET_COUNTER(&htim2);
       if (host_channel_is_active) {
-        xQueueSendToBack(queue_to_hostHandle, &frame, 0);
+        xQueueSendToBack(queue_to_hostHandle, &frame_object.frame, 0);
       }
     }
     
@@ -222,14 +222,14 @@ void can_on_disable_cb(uint8_t channel)
   host_channel_is_active = false;
 }
 
-void can_on_tx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
+void can_on_tx_cb(uint8_t channel, struct gs_host_frame *frame)
 {
   UNUSED(channel);
   UNUSED(frame);
   led_indicate_rxtx(&hled1);
 }
 
-void can_on_rx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
+void can_on_rx_cb(uint8_t channel, struct gs_host_frame *frame)
 {
   UNUSED(channel);
   UNUSED(frame);

@@ -41,7 +41,7 @@ extern TIM_HandleTypeDef htim2;
 extern QueueHandle_t queue_to_hostHandle;
 extern USBD_HandleTypeDef hUSB;
 
-static bool can_parse_error_status(uint32_t err, uint32_t last_err, CAN_HANDLE_TYPEDEF *hcan, struct GS_HOST_FRAME *frame);
+static bool can_parse_error_status(uint32_t err, uint32_t last_err, CAN_HANDLE_TYPEDEF *hcan, struct gs_host_frame *frame);
 
 /** @brief Function to initialize the FDCAN handle
  *  @param FDCAN_HandleTypeDef *hcan - The pointer to the handle.
@@ -292,10 +292,10 @@ bool can_is_enabled(CAN_HANDLE_TYPEDEF *hcan)
 
 /** @brief Function to disable the CAN channel
  *  @param FDCAN_HandleTypeDef *hcan - The pointer to the handle.
- *  @param struct GS_HOST_FRAME *frame - The pointer to the host frame containing message data.
+ *  @param struct gs_host_frame *frame - The pointer to the host frame containing message data.
  *  @retval true if TX was successful, false if no successful.
  */
-bool can_send(CAN_HANDLE_TYPEDEF *hcan, struct GS_HOST_FRAME *frame)
+bool can_send(CAN_HANDLE_TYPEDEF *hcan, struct gs_host_frame *frame)
 {
 #if defined(CAN)
   CAN_TxHeaderTypeDef TxHeader;
@@ -308,7 +308,7 @@ bool can_send(CAN_HANDLE_TYPEDEF *hcan, struct GS_HOST_FRAME *frame)
   TxHeader.DLC = frame->can_dlc;
   TxHeader.TransmitGlobalTime = DISABLE;
 
-  if (HAL_CAN_AddTxMessage(hcan, &TxHeader, (uint8_t*)frame->data, &TxMailbox) != HAL_OK) {
+  if (HAL_CAN_AddTxMessage(hcan, &TxHeader, (uint8_t*)frame->classic_can->data, &TxMailbox) != HAL_OK) {
     return false;
   }
   else {
@@ -353,7 +353,7 @@ bool can_send(CAN_HANDLE_TYPEDEF *hcan, struct GS_HOST_FRAME *frame)
     TxHeader.FDFormat = FDCAN_CLASSIC_CAN;
   }
 
-  if (HAL_FDCAN_AddMessageToTxFifoQ(hcan, &TxHeader, (uint8_t*)frame->data) != HAL_OK) {
+  if (HAL_FDCAN_AddMessageToTxFifoQ(hcan, &TxHeader, (uint8_t*)frame->canfd->data) != HAL_OK) {
     return false;
   }
   else {
@@ -394,80 +394,80 @@ uint8_t can_get_termination(uint8_t channel)
 #if defined(CAN)
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
-    CAN_RxHeaderTypeDef RxHeader;
-    static struct GS_HOST_FRAME frame;
+  CAN_RxHeaderTypeDef RxHeader;
+  static struct gs_host_frame_object frame_object;
    /* Get RX message */
-   if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxHeader, (uint8_t*)&frame.data) != HAL_OK)
-   {
-     return;
-   }
+  if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxHeader, (uint8_t*)&frame_object.frame.classic_can->data) != HAL_OK)
+  {
+    return;
+  }
 
-   frame.channel = USBD_GS_CAN_GetChannelNumber(&hUSB, hcan);
-   frame.can_dlc = RxHeader.DLC;
-   if (RxHeader.IDE == CAN_ID_EXT) {
-     frame.can_id = RxHeader.ExtId | CAN_EFF_FLAG;
-   }
-   else {
-     frame.can_id = RxHeader.StdId;
-   }
+  frame_object.frame.channel = USBD_GS_CAN_GetChannelNumber(&hUSB, hcan);
+  frame_object.frame.can_dlc = RxHeader.DLC;
+  if (RxHeader.IDE == CAN_ID_EXT) {
+    frame_object.frame.can_id = RxHeader.ExtId | CAN_EFF_FLAG;
+  }
+  else {
+    frame_object.frame.can_id = RxHeader.StdId;
+  }
 
-   if (RxHeader.RTR == CAN_RTR_REMOTE) {
-     frame.can_id |= CAN_RTR_FLAG;
-   }
+  if (RxHeader.RTR == CAN_RTR_REMOTE) {
+    frame_object.frame.can_id |= CAN_RTR_FLAG;
+  }
 
-   frame.echo_id = 0xFFFFFFFF;
-   frame.reserved = 0;
-   frame.flags = 0;
-   frame.timestamp_us = __HAL_TIM_GET_COUNTER(&htim2);
+  frame_object.frame.echo_id = 0xFFFFFFFF;
+  frame_object.frame.reserved = 0;
+  frame_object.frame.flags = 0;
+  frame_object.frame.classic_can_ts->timestamp_us = __HAL_TIM_GET_COUNTER(&htim2);
 
-   /* put this CAN message into the queue to send to host */
-   xQueueSendToBackFromISR(queue_to_hostHandle, &frame, NULL);
+  /* put this CAN message into the queue to send to host */
+  xQueueSendToBackFromISR(queue_to_hostHandle, &frame_object.frame, NULL);
 
-   can_on_rx_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan), &frame);
+  can_on_rx_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan), &frame_object.frame);
 }
 #elif defined(FDCAN1)
 void HAL_FDCAN_RxFifo0Callback(CAN_HANDLE_TYPEDEF *hcan, uint32_t RxFifo0ITs) 
 {
   UNUSED(RxFifo0ITs);
   FDCAN_RxHeaderTypeDef RxHeader;
-  static struct GS_HOST_FRAME frame;
+  static struct gs_host_frame_object frame_object;
 
-  if (HAL_FDCAN_GetRxMessage(hcan, FDCAN_RX_FIFO0, &RxHeader, frame.data) != HAL_OK) {
+  if (HAL_FDCAN_GetRxMessage(hcan, FDCAN_RX_FIFO0, &RxHeader, frame_object.frame.canfd->data) != HAL_OK) {
     return;
   }
 
-  frame.channel = USBD_GS_CAN_GetChannelNumber(&hUSB, hcan);
-  frame.can_id = RxHeader.Identifier;
+  frame_object.frame.channel = USBD_GS_CAN_GetChannelNumber(&hUSB, hcan);
+  frame_object.frame.can_id = RxHeader.Identifier;
 
   if (RxHeader.IdType == FDCAN_EXTENDED_ID) {
-    frame.can_id |= CAN_EFF_FLAG;
+    frame_object.frame.can_id |= CAN_EFF_FLAG;
   }
 
   if (RxHeader.RxFrameType == FDCAN_REMOTE_FRAME) {
-    frame.can_id |= CAN_RTR_FLAG;
+    frame_object.frame.can_id |= CAN_RTR_FLAG;
   }
 
-  frame.can_dlc = (RxHeader.DataLength & 0x000F0000) >> 16;
+  frame_object.frame.can_dlc = (RxHeader.DataLength & 0x000F0000) >> 16;
 
-  frame.echo_id = 0xFFFFFFFF; // not a echo frame
-  frame.reserved = 0;
-  frame.flags = 0;
+  frame_object.frame.echo_id = 0xFFFFFFFF; // not a echo frame
+  frame_object.frame.reserved = 0;
+  frame_object.frame.flags = 0;
 
   if (RxHeader.FDFormat == FDCAN_FD_CAN) {
     /* this is a CAN-FD frame */
-    frame.flags = GS_CAN_FLAG_FD;
+    frame_object.frame.flags = GS_CAN_FLAG_FD;
     if (RxHeader.BitRateSwitch == FDCAN_BRS_ON) {
-      frame.flags |= GS_CAN_FLAG_BRS;
+      frame_object.frame.flags |= GS_CAN_FLAG_BRS;
     }
     
   }
 
-  frame.timestamp_us = __HAL_TIM_GET_COUNTER(&htim2);
+  frame_object.frame.canfd_ts->timestamp_us = __HAL_TIM_GET_COUNTER(&htim2);
 
   /* put this CAN message into the queue to send to host */
-  xQueueSendToBackFromISR(queue_to_hostHandle, &frame, NULL);
+  xQueueSendToBackFromISR(queue_to_hostHandle, &frame_object.frame, NULL);
 
-  can_on_rx_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan), &frame);
+  can_on_rx_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan), &frame_object.frame);
 }
 #endif
 
@@ -482,11 +482,11 @@ void HAL_FDCAN_RxFifo0Callback(CAN_HANDLE_TYPEDEF *hcan, uint32_t RxFifo0ITs)
 #if defined(CAN)
 void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan)
 {
-  struct GS_HOST_FRAME frame;
+  struct gs_host_frame_object frame_object;
   uint32_t can_err_status = hcan->Instance->ESR;
-  can_parse_error_status(can_err_status, can_last_err_status, hcan, &frame);
+  can_parse_error_status(can_err_status, can_last_err_status, hcan, &frame_object.frame);
   /* put this CAN message into the queue to send to host */
-  xQueueSendToBackFromISR(queue_to_hostHandle, &frame, NULL);
+  xQueueSendToBackFromISR(queue_to_hostHandle, &frame_object.frame, NULL);
   can_last_err_status = can_err_status;
 
 }
@@ -494,7 +494,7 @@ void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan)
 void HAL_FDCAN_ErrorStatusCallback(CAN_HANDLE_TYPEDEF *hcan, uint32_t ErrorStatusITs)
 {
   UNUSED(ErrorStatusITs);
-  struct GS_HOST_FRAME frame;
+  struct gs_host_frame frame;
   uint32_t can_err_status = hcan->Instance->PSR;
   can_parse_error_status(can_err_status, can_last_err_status, hcan, &frame);
   /* put this CAN message into the queue to send to host */
@@ -514,10 +514,10 @@ static bool status_is_active(uint32_t err)
 
 /** @brief Function parse the error data returned from the error callback
  *  @param FDCAN_ProtocolStatusTypeDef *status - pointer to the status data
- *  @param struct GS_HOST_FRAME *frame - The pointer to the host frame containing message data.
+ *  @param struct gs_host_frame *frame - The pointer to the host frame containing message data.
  *  @retval None
  */
-bool can_parse_error_status(uint32_t err, uint32_t last_err, CAN_HANDLE_TYPEDEF *hcan, struct GS_HOST_FRAME *frame)
+bool can_parse_error_status(uint32_t err, uint32_t last_err, CAN_HANDLE_TYPEDEF *hcan, struct gs_host_frame *frame)
 {
   /* We build up the detailed error information at the same time as we decide
    * whether there's anything worth sending. This variable tracks that final
@@ -527,19 +527,19 @@ bool can_parse_error_status(uint32_t err, uint32_t last_err, CAN_HANDLE_TYPEDEF 
   frame->echo_id = 0xFFFFFFFF;
   frame->can_id  = CAN_ERR_FLAG;
   frame->can_dlc = CAN_ERR_DLC;
-  frame->data[0] = CAN_ERR_LOSTARB_UNSPEC;
-  frame->data[1] = CAN_ERR_CRTL_UNSPEC;
-  frame->data[2] = CAN_ERR_PROT_UNSPEC;
-  frame->data[3] = CAN_ERR_PROT_LOC_UNSPEC;
-  frame->data[4] = CAN_ERR_TRX_UNSPEC;
-  frame->data[5] = 0;
-  frame->data[6] = 0;
-  frame->data[7] = 0;
+  frame->classic_can->data[0] = CAN_ERR_LOSTARB_UNSPEC;
+  frame->classic_can->data[1] = CAN_ERR_CRTL_UNSPEC;
+  frame->classic_can->data[2] = CAN_ERR_PROT_UNSPEC;
+  frame->classic_can->data[3] = CAN_ERR_PROT_LOC_UNSPEC;
+  frame->classic_can->data[4] = CAN_ERR_TRX_UNSPEC;
+  frame->classic_can->data[5] = 0;
+  frame->classic_can->data[6] = 0;
+  frame->classic_can->data[7] = 0;
 
   /* We transitioned from passive/bus-off to active, so report the edge. */
   if (!status_is_active(last_err) && status_is_active(err)) {
     frame->can_id |= CAN_ERR_CRTL;
-    frame->data[1] |= CAN_ERR_CRTL_ACTIVE;
+    frame->classic_can->data[1] |= CAN_ERR_CRTL_ACTIVE;
     should_send = true;
   }
 
@@ -562,19 +562,19 @@ bool can_parse_error_status(uint32_t err, uint32_t last_err, CAN_HANDLE_TYPEDEF 
 
   /* The Linux sja1000 driver puts these counters here. Seems like as good a
    * place as any. */
-  frame->data[6] = (err>>16) & 0xFF;
-  frame->data[7] = (err>>24) & 0xFF;
+  frame->classic_can->data[6] = (err>>16) & 0xFF;
+  frame->classic_can->data[7] = (err>>24) & 0xFF;
 
   if (err & CAN_ESR_EPVF) {
     if (!(last_err & CAN_ESR_EPVF)) {
       frame->can_id |= CAN_ERR_CRTL;
-      frame->data[1] |= CAN_ERR_CRTL_RX_PASSIVE | CAN_ERR_CRTL_TX_PASSIVE;
+      frame->classic_can->data[1] |= CAN_ERR_CRTL_RX_PASSIVE | CAN_ERR_CRTL_TX_PASSIVE;
       should_send = true;
     }
   } else if (err & CAN_ESR_EWGF) {
     if (!(last_err & CAN_ESR_EWGF)) {
       frame->can_id |= CAN_ERR_CRTL;
-      frame->data[1] |= CAN_ERR_CRTL_RX_WARNING | CAN_ERR_CRTL_TX_WARNING;
+      frame->classic_can->data[1] |= CAN_ERR_CRTL_RX_WARNING | CAN_ERR_CRTL_TX_WARNING;
       should_send = true;
     }
   }
@@ -592,20 +592,20 @@ bool can_parse_error_status(uint32_t err, uint32_t last_err, CAN_HANDLE_TYPEDEF 
   /* The Linux sja1000 driver puts these counters here. Seems like as good a
   * place as any. */
   // TX error count
-  frame->data[6] = ((hcan->Instance->ECR & FDCAN_ECR_TEC) >> FDCAN_ECR_TEC_Pos);
+  frame->classic_can->data[6] = ((hcan->Instance->ECR & FDCAN_ECR_TEC) >> FDCAN_ECR_TEC_Pos);
   // RX error count
-  frame->data[7] = ((hcan->Instance->ECR & FDCAN_ECR_REC) >> FDCAN_ECR_REC_Pos);
+  frame->classic_can->data[7] = ((hcan->Instance->ECR & FDCAN_ECR_REC) >> FDCAN_ECR_REC_Pos);
 
   if (err & FDCAN_PSR_EP) {
   if (!(last_err & FDCAN_PSR_EP)) {
     frame->can_id |= CAN_ERR_CRTL;
-    frame->data[1] |= CAN_ERR_CRTL_RX_PASSIVE | CAN_ERR_CRTL_TX_PASSIVE;
+    frame->classic_can->data[1] |= CAN_ERR_CRTL_RX_PASSIVE | CAN_ERR_CRTL_TX_PASSIVE;
     should_send = true;
   }
   } else if (err & FDCAN_PSR_EW) {
   if (!(last_err & FDCAN_PSR_EW)) {
     frame->can_id |= CAN_ERR_CRTL;
-    frame->data[1] |= CAN_ERR_CRTL_RX_WARNING | CAN_ERR_CRTL_TX_WARNING;
+    frame->classic_can->data[1] |= CAN_ERR_CRTL_RX_WARNING | CAN_ERR_CRTL_TX_WARNING;
     should_send = true;
   }
   }
@@ -616,12 +616,12 @@ bool can_parse_error_status(uint32_t err, uint32_t last_err, CAN_HANDLE_TYPEDEF 
   switch (lec) {
     case 0x01: /* stuff error */
       frame->can_id |= CAN_ERR_PROT;
-      frame->data[2] |= CAN_ERR_PROT_STUFF;
+      frame->classic_can->data[2] |= CAN_ERR_PROT_STUFF;
       should_send = true;
       break;
     case 0x02: /* form error */
       frame->can_id |= CAN_ERR_PROT;
-      frame->data[2] |= CAN_ERR_PROT_FORM;
+      frame->classic_can->data[2] |= CAN_ERR_PROT_FORM;
       should_send = true;
       break;
     case 0x03: /* ack error */
@@ -630,17 +630,17 @@ bool can_parse_error_status(uint32_t err, uint32_t last_err, CAN_HANDLE_TYPEDEF 
       break;
     case 0x04: /* bit recessive error */
       frame->can_id |= CAN_ERR_PROT;
-      frame->data[2] |= CAN_ERR_PROT_BIT1;
+      frame->classic_can->data[2] |= CAN_ERR_PROT_BIT1;
       should_send = true;
       break;
     case 0x05: /* bit dominant error */
       frame->can_id |= CAN_ERR_PROT;
-      frame->data[2] |= CAN_ERR_PROT_BIT0;
+      frame->classic_can->data[2] |= CAN_ERR_PROT_BIT0;
       should_send = true;
       break;
     case 0x06: /* CRC error */
       frame->can_id |= CAN_ERR_PROT;
-      frame->data[3] |= CAN_ERR_PROT_LOC_CRC_SEQ;
+      frame->classic_can->data[3] |= CAN_ERR_PROT_LOC_CRC_SEQ;
       should_send = true;
       break;
     default: /* 0=no error, 7=no change */
@@ -669,10 +669,10 @@ __weak void can_on_disable_cb(uint8_t channel)
 /** @brief Callback function called when a message is succefully 
  *         transmitted on the CAN bus
  *  @param uint8_t channel - CAN channel that was acted upon
- *  @param struct GS_HOST_FRAME *frame - data that was sent on the bus
+ *  @param struct gs_host_frame *frame - data that was sent on the bus
  *  @retval None
  */
-__weak void can_on_tx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
+__weak void can_on_tx_cb(uint8_t channel, struct gs_host_frame *frame)
 {
   UNUSED(channel);
   UNUSED(frame);
@@ -680,10 +680,10 @@ __weak void can_on_tx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
 /** @brief Callback function called when a message is succefully 
  *         received on the CAN bus
  *  @param uint8_t channel - CAN channel that was acted upon
- *  @param struct GS_HOST_FRAME *frame - data that was received on the bus
+ *  @param struct gs_host_frame *frame - data that was received on the bus
  *  @retval None
  */
-__weak void can_on_rx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
+__weak void can_on_rx_cb(uint8_t channel, struct gs_host_frame *frame)
 {
   UNUSED(channel);
   UNUSED(frame);
