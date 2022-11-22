@@ -104,7 +104,7 @@ led_mode_t led_get_mode(LED_HandleTypeDef* hled)
 void led_set_active(LED_HandleTypeDef* hled)
 {
   /* set the mode flag - the handler will update the GPIO */
-  hled->prev_led_mode = hled->led_mode;
+  hled->prev_led_mode = LED_MODE_ACTIVE;
   hled->led_mode = LED_MODE_ACTIVE;
 }
 
@@ -115,7 +115,7 @@ void led_set_active(LED_HandleTypeDef* hled)
 void led_set_inactive(LED_HandleTypeDef* hled)
 {
   /* set the mode flag - the handler will update the GPIO */
-  hled->prev_led_mode = hled->led_mode;
+  hled->prev_led_mode = LED_MODE_INACTIVE;
   hled->led_mode = LED_MODE_INACTIVE;
 }
 
@@ -129,7 +129,6 @@ void led_indicate_rxtx(LED_HandleTypeDef* hled)
   if ((hled->led_mode != LED_MODE_RXTX_ACTIVE)  && (hled->led_mode != LED_MODE_RXTX_HOLDOFF)) {
     /* turn on the LED for a brief period of time to indicate a message was sent */
     HAL_GPIO_WritePin(hled->GPIOx, hled->GPIO_Pin, hled->led_active_level);
-    hled->prev_led_mode = hled->led_mode;
     hled->led_mode = LED_MODE_RXTX_ACTIVE;
     hled->led_rxtx_start_tick = HAL_GetTick();
   }
@@ -142,20 +141,7 @@ void led_indicate_rxtx(LED_HandleTypeDef* hled)
  */
 void led_blink(LED_HandleTypeDef* hled, uint32_t period_ms)
 {
-  hled->prev_led_mode = hled->led_mode;
-  hled->prev_blink_period_ms = hled->blink_period_ms;
   hled->blink_period_ms = period_ms;
   hled->led_mode = LED_MODE_BLINK;
   hled->blink_toggle_start_tick = HAL_GetTick();
 }
-
-/** @brief Function to restore the previous LED mode
- *  @param LED_HandleTypeDef* hled - The pointer to the handle.
- *  @retval None
- */
-void led_restore_prev_mode(LED_HandleTypeDef* hled)
-{
-  hled->led_mode = hled->prev_led_mode;
-  hled->blink_period_ms = hled->prev_blink_period_ms;
-}
-

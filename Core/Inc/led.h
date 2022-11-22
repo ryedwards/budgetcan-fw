@@ -72,7 +72,6 @@ void led_set_active(LED_HandleTypeDef* hled);
 void led_set_inactive(LED_HandleTypeDef* hled);
 void led_indicate_rxtx(LED_HandleTypeDef* hled);
 void led_blink(LED_HandleTypeDef* hled, uint32_t period_ms);
-void led_restore_prev_mode(LED_HandleTypeDef* hled);
 
 #ifdef __cplusplus
 }
