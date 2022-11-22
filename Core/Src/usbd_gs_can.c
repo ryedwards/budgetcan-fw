@@ -637,17 +637,6 @@ inline uint8_t USBD_GS_CAN_PrepareReceive(USBD_HandleTypeDef *pdev)
   return USBD_LL_PrepareReceive(pdev, GSUSB_ENDPOINT_OUT, (uint8_t*)&hcan->from_host_frame, sizeof(hcan->from_host_frame));
 }
 
-bool USBD_GS_CAN_TxReady(USBD_HandleTypeDef *pdev)
-{
-  USBD_GS_CAN_HandleTypeDef *hcan = (USBD_GS_CAN_HandleTypeDef*)pdev->pClassData;
-
-  USBD_GS_CAN_PrepareReceive(pdev);
-
-  bool result = hcan->TxState == 0;
-
-  return result;
-}
-
 uint8_t USBD_GS_CAN_Transmit(USBD_HandleTypeDef *pdev, uint8_t *buf, uint16_t len)
 {
   USBD_GS_CAN_HandleTypeDef *hcan = (USBD_GS_CAN_HandleTypeDef*)pdev->pClassData;
