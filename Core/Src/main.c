@@ -126,8 +126,8 @@ int main(void)
               TASK_MAIN_STACK_PRIORITY, &xCreatedMainTask);
 
   /* Init the RTOS streams and queues */
-  queue_from_hostHandle = xQueueCreate(QUEUE_SIZE_HOST_TO_DEV, sizeof(struct gs_host_frame));
-  queue_to_hostHandle = xQueueCreate(QUEUE_SIZE_DEV_TO_HOST, sizeof(struct gs_host_frame));
+  queue_from_hostHandle = xQueueCreate(QUEUE_SIZE_HOST_TO_DEV, GS_HOST_FRAME_SIZE);
+  queue_to_hostHandle = xQueueCreate(QUEUE_SIZE_DEV_TO_HOST, GS_HOST_FRAME_SIZE);
 
   /* Start scheduler */
   vTaskStartScheduler();
