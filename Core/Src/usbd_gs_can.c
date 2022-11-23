@@ -41,32 +41,6 @@ extern QueueHandle_t queue_from_hostHandle;
 extern TIM_HandleTypeDef htim2;
 extern uint8_t USBD_StrDesc[USBD_MAX_STR_DESC_SIZ];
 
-static uint8_t USBD_GS_CAN_Start(USBD_HandleTypeDef *pdev, uint8_t cfgidx);
-static uint8_t USBD_GS_CAN_DeInit(USBD_HandleTypeDef *pdev, uint8_t cfgidx);
-static uint8_t USBD_GS_CAN_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
-static uint8_t USBD_GS_CAN_EP0_RxReady(USBD_HandleTypeDef *pdev);
-static uint8_t USBD_GS_CAN_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum);
-static uint8_t *USBD_GS_CAN_GetCfgDesc(uint16_t *len);
-static uint8_t USBD_GS_CAN_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum);
-static uint8_t *USBD_GS_CAN_GetStrDesc(USBD_HandleTypeDef *pdev, uint8_t index, uint16_t *length);
-static uint8_t USBD_GS_CAN_SOF(struct _USBD_HandleTypeDef *pdev);
-
-/* CAN interface class callbacks structure */
-USBD_ClassTypeDef USBD_GS_CAN = {
-	.Init = USBD_GS_CAN_Start,
-	.DeInit = USBD_GS_CAN_DeInit,
-	.Setup = USBD_GS_CAN_Setup,
-	.EP0_RxReady = USBD_GS_CAN_EP0_RxReady,
-	.DataIn = USBD_GS_CAN_DataIn,
-	.DataOut = USBD_GS_CAN_DataOut,
-	.SOF = USBD_GS_CAN_SOF,
-	.GetHSConfigDescriptor = USBD_GS_CAN_GetCfgDesc,
-	.GetFSConfigDescriptor = USBD_GS_CAN_GetCfgDesc,
-	.GetOtherSpeedConfigDescriptor = USBD_GS_CAN_GetCfgDesc,
-	.GetUsrStrDescriptor = USBD_GS_CAN_GetStrDesc,
-};
-
-
 /* Configuration Descriptor */
 static const uint8_t USBD_GS_CAN_CfgDesc[USB_CAN_CONFIG_DESC_SIZ] =
 {
@@ -246,6 +220,7 @@ static const struct gs_device_bt_const USBD_GS_CAN_btconst = {
 			   | GS_CAN_FEATURE_HW_TIMESTAMP
 			   | GS_CAN_FEATURE_IDENTIFY
 			   | GS_CAN_FEATURE_USER_ID
+			   | GS_CAN_FEATURE_PAD_PKTS_TO_MAX_PKT_SIZE
 #if defined(CANFD_FEATURE)
 			   | GS_CAN_FEATURE_FD
 			   | GS_CAN_FEATURE_BT_CONST_EXT
@@ -253,7 +228,7 @@ static const struct gs_device_bt_const USBD_GS_CAN_btconst = {
 #if defined(CAN_TERM_SUPPORT)
 			   | GS_CAN_FEATURE_TERMINATION
 #endif
-			   | GS_CAN_FEATURE_PAD_PKTS_TO_MAX_PKT_SIZE,
+	,
 	.fclk_can = CAN_CLOCK_SPEED, // can timing base clock
 	.tseg1_min = 1, // tseg1 min
 	.tseg1_max = 16, // tseg1 max
@@ -271,6 +246,7 @@ static const struct gs_device_bt_const_extended USBD_GS_CAN_btconst_extended = {
 			   | GS_CAN_FEATURE_HW_TIMESTAMP
 			   | GS_CAN_FEATURE_IDENTIFY
 			   | GS_CAN_FEATURE_USER_ID
+			   | GS_CAN_FEATURE_PAD_PKTS_TO_MAX_PKT_SIZE
 #if defined(CANFD_FEATURE)
 			   | GS_CAN_FEATURE_FD
 			   | GS_CAN_FEATURE_BT_CONST_EXT
@@ -278,7 +254,8 @@ static const struct gs_device_bt_const_extended USBD_GS_CAN_btconst_extended = {
 #if defined(CAN_TERM_SUPPORT)
 			   | GS_CAN_FEATURE_TERMINATION
 #endif
-			   | GS_CAN_FEATURE_PAD_PKTS_TO_MAX_PKT_SIZE,
+
+	,
 	.fclk_can = CAN_CLOCK_SPEED, // can timing base clock
 	.tseg1_min = 1, // tseg1 min
 	.tseg1_max = 16, // tseg1 max
@@ -306,6 +283,12 @@ uint8_t USBD_GS_CAN_Init(USBD_HandleTypeDef *pdev, USBD_GS_CAN_HandleTypeDef *hc
 	return USBD_OK;
 }
 
+inline uint8_t USBD_GS_CAN_PrepareReceive(USBD_HandleTypeDef *pdev)
+{
+	USBD_GS_CAN_HandleTypeDef *hcan = (USBD_GS_CAN_HandleTypeDef*)pdev->pClassData;
+	return USBD_LL_PrepareReceive(pdev, GSUSB_ENDPOINT_OUT, (uint8_t*)&hcan->from_host_frame, sizeof(hcan->from_host_frame));
+}
+
 static uint8_t USBD_GS_CAN_Start(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 {
 	UNUSED(cfgidx);
@@ -329,26 +312,124 @@ static uint8_t USBD_GS_CAN_DeInit(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 	return USBD_OK;
 }
 
-static uint8_t USBD_GS_CAN_SOF(struct _USBD_HandleTypeDef *pdev)
+static uint8_t USBD_GS_CAN_Config_Request(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
 {
 	USBD_GS_CAN_HandleTypeDef *hcan = (USBD_GS_CAN_HandleTypeDef*) pdev->pClassData;
-	hcan->sof_timestamp_us = __HAL_TIM_GET_COUNTER(&htim2);
+	uint32_t d32;
+
+	switch (req->bRequest) {
+
+		case GS_USB_BREQ_HOST_FORMAT:
+		case GS_USB_BREQ_MODE:
+		case GS_USB_BREQ_BITTIMING:
+		case GS_USB_BREQ_IDENTIFY:
+		case GS_USB_BREQ_SET_USER_ID:
+		case GS_USB_BREQ_DATA_BITTIMING:
+		case GS_USB_BREQ_SET_TERMINATION:
+			hcan->last_setup_request = *req;
+			USBD_CtlPrepareRx(pdev, hcan->ep0_buf, req->wLength);
+			break;
+
+		case GS_USB_BREQ_GET_TERMINATION:
+			d32 = (uint32_t)can_get_termination(req->wValue);
+			memcpy(hcan->ep0_buf, &d32, sizeof(d32));
+			USBD_CtlSendData(pdev, hcan->ep0_buf, req->wLength);
+			break;
+
+		case GS_USB_BREQ_DEVICE_CONFIG:
+			memcpy(hcan->ep0_buf, &USBD_GS_CAN_dconf, sizeof(USBD_GS_CAN_dconf));
+			USBD_CtlSendData(pdev, hcan->ep0_buf, req->wLength);
+			break;
+
+		case GS_USB_BREQ_BT_CONST:
+			memcpy(hcan->ep0_buf, &USBD_GS_CAN_btconst, sizeof(USBD_GS_CAN_btconst));
+			USBD_CtlSendData(pdev, hcan->ep0_buf, req->wLength);
+			break;
+
+		case GS_USB_BREQ_BT_CONST_EXT:
+			memcpy(hcan->ep0_buf, &USBD_GS_CAN_btconst_extended, sizeof(USBD_GS_CAN_btconst_extended));
+			USBD_CtlSendData(pdev, hcan->ep0_buf, req->wLength);
+			break;
+
+		case GS_USB_BREQ_TIMESTAMP:
+			memcpy(hcan->ep0_buf, &hcan->sof_timestamp_us, sizeof(hcan->sof_timestamp_us));
+			USBD_CtlSendData(pdev, hcan->ep0_buf, sizeof(hcan->sof_timestamp_us));
+			break;
+
+		default:
+			USBD_CtlError(pdev, req);
+	}
+
 	return USBD_OK;
 }
 
-uint8_t USBD_GS_CAN_GetChannelNumber(USBD_HandleTypeDef *pdev, CAN_HANDLE_TYPEDEF* handle) {
-
+static uint8_t USBD_GS_CAN_DFU_Request(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
+{
 	USBD_GS_CAN_HandleTypeDef *hcan = (USBD_GS_CAN_HandleTypeDef*) pdev->pClassData;
-	uint8_t channel = 0xFF;
-
-	for (uint8_t chan_index = 0; chan_index < CAN_NUM_CHANNELS; chan_index++) {
-		if ( hcan->channels[chan_index] == handle) {
-			channel = chan_index;
+	switch (req->bRequest) {
+		case 0: // DETACH request
+			hcan->dfu_detach_requested = true;
 			break;
-		}
-	}
 
-	return channel;
+		case 3: // GET_STATUS request
+			hcan->ep0_buf[0] = 0x00; // bStatus: 0x00 == OK
+			hcan->ep0_buf[1] = 0x00; // bwPollTimeout
+			hcan->ep0_buf[2] = 0x00;
+			hcan->ep0_buf[3] = 0x00;
+			hcan->ep0_buf[4] = 0x00; // bState: appIDLE
+			hcan->ep0_buf[5] = 0xFF; // status string descriptor index
+			USBD_CtlSendData(pdev, hcan->ep0_buf, 6);
+			break;
+
+		default:
+			USBD_CtlError(pdev, req);
+
+	}
+	return USBD_OK;
+}
+
+static uint8_t USBD_GS_CAN_Vendor_Request(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
+{
+	uint8_t req_rcpt = req->bmRequest & 0x1F;
+	uint8_t req_type = (req->bmRequest >> 5) & 0x03;
+
+	if (
+		(req_type == 0x01)// class request
+	   && (req_rcpt == 0x01) // recipient: interface
+	   && (req->wIndex == DFU_INTERFACE_NUM)
+		) {
+		return USBD_GS_CAN_DFU_Request(pdev, req);
+	} else {
+		return USBD_GS_CAN_Config_Request(pdev, req);
+	}
+}
+
+static uint8_t USBD_GS_CAN_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
+{
+	static uint8_t ifalt = 0;
+
+	switch (req->bmRequest & USB_REQ_TYPE_MASK) {
+
+		case USB_REQ_TYPE_CLASS:
+		case USB_REQ_TYPE_VENDOR:
+			return USBD_GS_CAN_Vendor_Request(pdev, req);
+
+		case USB_REQ_TYPE_STANDARD:
+			switch (req->bRequest) {
+				case USB_REQ_GET_INTERFACE:
+					USBD_CtlSendData(pdev, &ifalt, 1);
+					break;
+
+				case USB_REQ_SET_INTERFACE:
+				default:
+					break;
+			}
+			break;
+
+		default:
+			break;
+	}
+	return USBD_OK;
 }
 
 static uint8_t USBD_GS_CAN_EP0_RxReady(USBD_HandleTypeDef *pdev) {
@@ -445,155 +526,6 @@ static uint8_t USBD_GS_CAN_EP0_RxReady(USBD_HandleTypeDef *pdev) {
 	return USBD_OK;
 }
 
-static uint8_t USBD_GS_CAN_DFU_Request(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
-{
-	USBD_GS_CAN_HandleTypeDef *hcan = (USBD_GS_CAN_HandleTypeDef*) pdev->pClassData;
-	switch (req->bRequest) {
-		case 0: // DETACH request
-			hcan->dfu_detach_requested = true;
-			break;
-
-		case 3: // GET_STATUS request
-			hcan->ep0_buf[0] = 0x00; // bStatus: 0x00 == OK
-			hcan->ep0_buf[1] = 0x00; // bwPollTimeout
-			hcan->ep0_buf[2] = 0x00;
-			hcan->ep0_buf[3] = 0x00;
-			hcan->ep0_buf[4] = 0x00; // bState: appIDLE
-			hcan->ep0_buf[5] = 0xFF; // status string descriptor index
-			USBD_CtlSendData(pdev, hcan->ep0_buf, 6);
-			break;
-
-		default:
-			USBD_CtlError(pdev, req);
-
-	}
-	return USBD_OK;
-}
-
-static uint8_t USBD_GS_CAN_Config_Request(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
-{
-	USBD_GS_CAN_HandleTypeDef *hcan = (USBD_GS_CAN_HandleTypeDef*) pdev->pClassData;
-	uint32_t d32;
-
-	switch (req->bRequest) {
-
-		case GS_USB_BREQ_HOST_FORMAT:
-		case GS_USB_BREQ_MODE:
-		case GS_USB_BREQ_BITTIMING:
-		case GS_USB_BREQ_IDENTIFY:
-		case GS_USB_BREQ_SET_USER_ID:
-		case GS_USB_BREQ_DATA_BITTIMING:
-		case GS_USB_BREQ_SET_TERMINATION:
-			hcan->last_setup_request = *req;
-			USBD_CtlPrepareRx(pdev, hcan->ep0_buf, req->wLength);
-			break;
-
-		case GS_USB_BREQ_GET_TERMINATION:
-			d32 = (uint32_t)can_get_termination(req->wValue);
-			memcpy(hcan->ep0_buf, &d32, sizeof(d32));
-			USBD_CtlSendData(pdev, hcan->ep0_buf, req->wLength);
-			break;
-
-		case GS_USB_BREQ_DEVICE_CONFIG:
-			memcpy(hcan->ep0_buf, &USBD_GS_CAN_dconf, sizeof(USBD_GS_CAN_dconf));
-			USBD_CtlSendData(pdev, hcan->ep0_buf, req->wLength);
-			break;
-
-		case GS_USB_BREQ_BT_CONST:
-			memcpy(hcan->ep0_buf, &USBD_GS_CAN_btconst, sizeof(USBD_GS_CAN_btconst));
-			USBD_CtlSendData(pdev, hcan->ep0_buf, req->wLength);
-			break;
-
-		case GS_USB_BREQ_BT_CONST_EXT:
-			memcpy(hcan->ep0_buf, &USBD_GS_CAN_btconst_extended, sizeof(USBD_GS_CAN_btconst_extended));
-			USBD_CtlSendData(pdev, hcan->ep0_buf, req->wLength);
-			break;
-
-		case GS_USB_BREQ_TIMESTAMP:
-			memcpy(hcan->ep0_buf, &hcan->sof_timestamp_us, sizeof(hcan->sof_timestamp_us));
-			USBD_CtlSendData(pdev, hcan->ep0_buf, sizeof(hcan->sof_timestamp_us));
-			break;
-
-		default:
-			USBD_CtlError(pdev, req);
-	}
-
-	return USBD_OK;
-}
-
-static uint8_t USBD_GS_CAN_Vendor_Request(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
-{
-	uint8_t req_rcpt = req->bmRequest & 0x1F;
-	uint8_t req_type = (req->bmRequest >> 5) & 0x03;
-
-	if (
-		(req_type == 0x01)// class request
-	   && (req_rcpt == 0x01) // recipient: interface
-	   && (req->wIndex == DFU_INTERFACE_NUM)
-		) {
-		return USBD_GS_CAN_DFU_Request(pdev, req);
-	} else {
-		return USBD_GS_CAN_Config_Request(pdev, req);
-	}
-}
-
-bool USBD_GS_CAN_CustomDeviceRequest(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
-{
-	if (req->bRequest == USBD_GS_CAN_VENDOR_CODE) {
-
-		switch (req->wIndex) {
-
-			case 0x0004:
-				memcpy(USBD_StrDesc, USBD_MS_COMP_ID_FEATURE_DESC, sizeof(USBD_MS_COMP_ID_FEATURE_DESC));
-				USBD_CtlSendData(pdev, USBD_StrDesc, MIN(sizeof(USBD_MS_COMP_ID_FEATURE_DESC), req->wLength));
-				return true;
-
-			case 0x0005:
-				if (req->wValue==0) { // only return our GUID for interface #0
-					memcpy(USBD_StrDesc, USBD_MS_EXT_PROP_FEATURE_DESC, sizeof(USBD_MS_EXT_PROP_FEATURE_DESC));
-					USBD_CtlSendData(pdev, USBD_StrDesc, MIN(sizeof(USBD_MS_EXT_PROP_FEATURE_DESC), req->wLength));
-					return true;
-				}
-				break;
-		}
-	}
-
-	return false;
-}
-
-bool USBD_GS_CAN_CustomInterfaceRequest(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
-{
-	return USBD_GS_CAN_CustomDeviceRequest(pdev, req);
-}
-
-static uint8_t USBD_GS_CAN_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
-{
-	static uint8_t ifalt = 0;
-
-	switch (req->bmRequest & USB_REQ_TYPE_MASK) {
-
-		case USB_REQ_TYPE_CLASS:
-		case USB_REQ_TYPE_VENDOR:
-			return USBD_GS_CAN_Vendor_Request(pdev, req);
-
-		case USB_REQ_TYPE_STANDARD:
-			switch (req->bRequest) {
-				case USB_REQ_GET_INTERFACE:
-					USBD_CtlSendData(pdev, &ifalt, 1);
-					break;
-
-				case USB_REQ_SET_INTERFACE:
-				default:
-					break;
-			}
-			break;
-
-		default:
-			break;
-	}
-	return USBD_OK;
-}
-
 static uint8_t USBD_GS_CAN_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum) {
 	(void) epnum;
 
@@ -624,6 +556,13 @@ static uint8_t USBD_GS_CAN_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
 	return USBD_OK;
 }
 
+static uint8_t USBD_GS_CAN_SOF(struct _USBD_HandleTypeDef *pdev)
+{
+	USBD_GS_CAN_HandleTypeDef *hcan = (USBD_GS_CAN_HandleTypeDef*) pdev->pClassData;
+	hcan->sof_timestamp_us = __HAL_TIM_GET_COUNTER(&htim2);
+	return USBD_OK;
+}
+
 static uint8_t *USBD_GS_CAN_GetCfgDesc(uint16_t *len)
 {
 	*len = sizeof(USBD_GS_CAN_CfgDesc);
@@ -631,23 +570,53 @@ static uint8_t *USBD_GS_CAN_GetCfgDesc(uint16_t *len)
 	return USBD_StrDesc;
 }
 
-inline uint8_t USBD_GS_CAN_PrepareReceive(USBD_HandleTypeDef *pdev)
+uint8_t *USBD_GS_CAN_GetStrDesc(USBD_HandleTypeDef *pdev, uint8_t index, uint16_t *length)
 {
-	USBD_GS_CAN_HandleTypeDef *hcan = (USBD_GS_CAN_HandleTypeDef*)pdev->pClassData;
-	return USBD_LL_PrepareReceive(pdev, GSUSB_ENDPOINT_OUT, (uint8_t*)&hcan->from_host_frame, sizeof(hcan->from_host_frame));
+	UNUSED(pdev);
+
+	switch (index) {
+		case DFU_INTERFACE_STR_INDEX:
+			USBD_GetString(DFU_INTERFACE_STRING, USBD_StrDesc, length);
+			return USBD_StrDesc;
+		case 0xEE:
+			*length = sizeof(USBD_GS_CAN_WINUSB_STR);
+			memcpy(USBD_StrDesc, USBD_GS_CAN_WINUSB_STR, sizeof(USBD_GS_CAN_WINUSB_STR));
+			return USBD_StrDesc;
+		default:
+			*length = 0;
+			USBD_CtlError(pdev, 0);
+			return 0;
+	}
 }
 
-uint8_t USBD_GS_CAN_Transmit(USBD_HandleTypeDef *pdev, uint8_t *buf, uint16_t len)
-{
-	USBD_GS_CAN_HandleTypeDef *hcan = (USBD_GS_CAN_HandleTypeDef*)pdev->pClassData;
-	if (hcan->TxState == 0) {
-		hcan->TxState = 1;
-		USBD_LL_Transmit(pdev, GSUSB_ENDPOINT_IN, buf, len);
-		return USBD_OK;
+/* CAN interface class callbacks structure */
+USBD_ClassTypeDef USBD_GS_CAN = {
+	.Init = USBD_GS_CAN_Start,
+	.DeInit = USBD_GS_CAN_DeInit,
+	.Setup = USBD_GS_CAN_Setup,
+	.EP0_RxReady = USBD_GS_CAN_EP0_RxReady,
+	.DataIn = USBD_GS_CAN_DataIn,
+	.DataOut = USBD_GS_CAN_DataOut,
+	.SOF = USBD_GS_CAN_SOF,
+	.GetHSConfigDescriptor = USBD_GS_CAN_GetCfgDesc,
+	.GetFSConfigDescriptor = USBD_GS_CAN_GetCfgDesc,
+	.GetOtherSpeedConfigDescriptor = USBD_GS_CAN_GetCfgDesc,
+	.GetUsrStrDescriptor = USBD_GS_CAN_GetStrDesc,
+};
+
+uint8_t USBD_GS_CAN_GetChannelNumber(USBD_HandleTypeDef *pdev, CAN_HANDLE_TYPEDEF* handle) {
+
+	USBD_GS_CAN_HandleTypeDef *hcan = (USBD_GS_CAN_HandleTypeDef*) pdev->pClassData;
+	uint8_t channel = 0xFF;
+
+	for (uint8_t chan_index = 0; chan_index < CAN_NUM_CHANNELS; chan_index++) {
+		if ( hcan->channels[chan_index] == handle) {
+			channel = chan_index;
+			break;
+		}
 	}
-	else {
-		return USBD_BUSY;
-	}
+
+	return channel;
 }
 
 uint8_t USBD_GS_CAN_SendFrame(USBD_HandleTypeDef *pdev, struct gs_host_frame *frame)
@@ -688,27 +657,43 @@ uint8_t USBD_GS_CAN_SendFrame(USBD_HandleTypeDef *pdev, struct gs_host_frame *fr
 		len = sizeof(buf);
 	}
 
-	uint8_t result = USBD_GS_CAN_Transmit(pdev, send_addr, len);
-	return result;
+	if (hcan->TxState == 0) {
+		hcan->TxState = 1;
+		USBD_LL_Transmit(pdev, GSUSB_ENDPOINT_IN, send_addr, len);
+		return USBD_OK;
+	}
+	else {
+		return USBD_BUSY;
+	}
 }
 
-uint8_t *USBD_GS_CAN_GetStrDesc(USBD_HandleTypeDef *pdev, uint8_t index, uint16_t *length)
+bool USBD_GS_CAN_CustomDeviceRequest(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
 {
-	UNUSED(pdev);
+	if (req->bRequest == USBD_GS_CAN_VENDOR_CODE) {
 
-	switch (index) {
-		case DFU_INTERFACE_STR_INDEX:
-			USBD_GetString(DFU_INTERFACE_STRING, USBD_StrDesc, length);
-			return USBD_StrDesc;
-		case 0xEE:
-			*length = sizeof(USBD_GS_CAN_WINUSB_STR);
-			memcpy(USBD_StrDesc, USBD_GS_CAN_WINUSB_STR, sizeof(USBD_GS_CAN_WINUSB_STR));
-			return USBD_StrDesc;
-		default:
-			*length = 0;
-			USBD_CtlError(pdev, 0);
-			return 0;
+		switch (req->wIndex) {
+
+			case 0x0004:
+				memcpy(USBD_StrDesc, USBD_MS_COMP_ID_FEATURE_DESC, sizeof(USBD_MS_COMP_ID_FEATURE_DESC));
+				USBD_CtlSendData(pdev, USBD_StrDesc, MIN(sizeof(USBD_MS_COMP_ID_FEATURE_DESC), req->wLength));
+				return true;
+
+			case 0x0005:
+				if (req->wValue==0) { // only return our GUID for interface #0
+					memcpy(USBD_StrDesc, USBD_MS_EXT_PROP_FEATURE_DESC, sizeof(USBD_MS_EXT_PROP_FEATURE_DESC));
+					USBD_CtlSendData(pdev, USBD_StrDesc, MIN(sizeof(USBD_MS_EXT_PROP_FEATURE_DESC), req->wLength));
+					return true;
+				}
+				break;
+		}
 	}
+
+	return false;
+}
+
+bool USBD_GS_CAN_CustomInterfaceRequest(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
+{
+	return USBD_GS_CAN_CustomDeviceRequest(pdev, req);
 }
 
 bool USBD_GS_CAN_DfuDetachRequested(USBD_HandleTypeDef *pdev)
