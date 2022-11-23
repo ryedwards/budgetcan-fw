@@ -254,7 +254,7 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
   hpcd_USB_DRD_FS.Init.lpm_enable = DISABLE;
   hpcd_USB_DRD_FS.Init.battery_charging_enable = DISABLE;
   hpcd_USB_DRD_FS.Init.vbus_sensing_enable = DISABLE;
-  hpcd_USB_DRD_FS.Init.bulk_doublebuffer_enable = ENABLE;
+  hpcd_USB_DRD_FS.Init.bulk_doublebuffer_enable = DISABLE;
   hpcd_USB_DRD_FS.Init.iso_singlebuffer_enable = DISABLE;
   if (HAL_PCD_Init(&hpcd_USB_DRD_FS) != HAL_OK)
   {
@@ -290,8 +290,8 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
 #else
   HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData, 0x00, PCD_SNG_BUF, 0x18);
   HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData, 0x80, PCD_SNG_BUF, 0x58);
-  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData, 0x81, PCD_SNG_BUF, 0x98);
-  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData, 0x02, PCD_DBL_BUF, 0x00D80158);
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData, 0x81, PCD_SNG_BUF, 0xD8);
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData, 0x02, PCD_SNG_BUF, 0x118);
 #endif
 
   return USBD_OK;
