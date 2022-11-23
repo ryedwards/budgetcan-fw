@@ -238,14 +238,14 @@ void can_on_disable_cb(uint8_t channel)
   printf("CAN diabled");
 }
 
-void can_on_tx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
+void can_on_tx_cb(uint8_t channel, struct gs_host_frame *frame)
 {
   UNUSED(channel);
   UNUSED(frame);
   led_indicate_rxtx(&hledtx);
 }
 
-void can_on_rx_cb(uint8_t channel, struct GS_HOST_FRAME *frame)
+void can_on_rx_cb(uint8_t channel, struct gs_host_frame *frame)
 {
   UNUSED(channel);
   UNUSED(frame);
