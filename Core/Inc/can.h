@@ -39,11 +39,11 @@ extern "C" {
 #include "gs_usb.h"
 
 #if defined (FDCAN1)
-#define CAN_HANDLE_TYPEDEF  FDCAN_HandleTypeDef
-#define CAN_TYPEDEF         FDCAN_GlobalTypeDef
+#define CAN_HANDLE_TYPEDEF FDCAN_HandleTypeDef
+#define CAN_TYPEDEF		   FDCAN_GlobalTypeDef
 #else
-#define CAN_HANDLE_TYPEDEF  CAN_HandleTypeDef
-#define CAN_TYPEDEF         CAN_TypeDef
+#define CAN_HANDLE_TYPEDEF CAN_HandleTypeDef
+#define CAN_TYPEDEF		   CAN_TypeDef
 #endif
 
 /* Exported functions --------------------------------------------------------*/

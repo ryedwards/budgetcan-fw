@@ -42,12 +42,12 @@ extern "C" {
 #include "can.h"
 
 /* Exported defines -----------------------------------------------------------*/
-#define CAN_DATA_MAX_PACKET_SIZE    64  /* Endpoint IN & OUT Packet size */
-#define CAN_CMD_PACKET_SIZE         72  /* Control Endpoint Packet size */
-#define USB_CAN_CONFIG_DESC_SIZ     50
-#define USBD_GS_CAN_VENDOR_CODE     0x20
-#define DFU_INTERFACE_NUM           1
-#define DFU_INTERFACE_STR_INDEX     0xE0
+#define CAN_DATA_MAX_PACKET_SIZE 64     /* Endpoint IN & OUT Packet size */
+#define CAN_CMD_PACKET_SIZE		 72     /* Control Endpoint Packet size */
+#define USB_CAN_CONFIG_DESC_SIZ	 50
+#define USBD_GS_CAN_VENDOR_CODE	 0x20
+#define DFU_INTERFACE_NUM		 1
+#define DFU_INTERFACE_STR_INDEX	 0xE0
 
 extern USBD_ClassTypeDef USBD_GS_CAN;
 
@@ -56,10 +56,10 @@ extern USBD_ClassTypeDef USBD_GS_CAN;
 #if !defined(FDCAN1)
 #error This CAN type does not support CANFD!!!
 #endif
-#define GS_HOST_FRAME_SIZE struct_size((struct gs_host_frame *)NULL, canfd_ts, 1)
+#define GS_HOST_FRAME_SIZE		   struct_size((struct gs_host_frame *)NULL, canfd_ts, 1)
 #define GS_HOST_CLASSIC_FRAME_SIZE struct_size((struct gs_host_frame *)NULL, classic_can_ts, 1)
 #else
-#define GS_HOST_FRAME_SIZE struct_size((struct gs_host_frame *)NULL, classic_can_ts, 1)
+#define GS_HOST_FRAME_SIZE		   struct_size((struct gs_host_frame *)NULL, classic_can_ts, 1)
 #endif
 
 struct gs_host_frame_object {
@@ -71,16 +71,16 @@ struct gs_host_frame_object {
 
 /* Exported types ------------------------------------------------------------*/
 typedef struct {
-  uint8_t ep0_buf[CAN_CMD_PACKET_SIZE];
-  __IO uint32_t TxState;
-  USBD_SetupReqTypedef last_setup_request;
-  struct gs_host_frame_object from_host_frame;
-  CAN_HANDLE_TYPEDEF *channels[CAN_NUM_CHANNELS];
-  bool dfu_detach_requested;
-  bool pad_pkts_to_max_pkt_size;
-  bool timestamps_enabled;
-  uint32_t sof_timestamp_us;
-  bool canfd_enabled[CAN_NUM_CHANNELS];
+	uint8_t ep0_buf[CAN_CMD_PACKET_SIZE];
+	__IO uint32_t TxState;
+	USBD_SetupReqTypedef last_setup_request;
+	struct gs_host_frame_object from_host_frame;
+	CAN_HANDLE_TYPEDEF *channels[CAN_NUM_CHANNELS];
+	bool dfu_detach_requested;
+	bool pad_pkts_to_max_pkt_size;
+	bool timestamps_enabled;
+	uint32_t sof_timestamp_us;
+	bool canfd_enabled[CAN_NUM_CHANNELS];
 } USBD_GS_CAN_HandleTypeDef __attribute__ ((aligned (4)));
 
 /* Exported functions --------------------------------------------------------*/

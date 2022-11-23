@@ -38,13 +38,13 @@ THE SOFTWARE.
  */
 void led_init(LED_HandleTypeDef* hled, GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, led_mode_t led_mode, uint8_t led_active_level)
 {
-  hled->GPIOx = GPIOx;
-  hled->GPIO_Pin = GPIO_Pin;
-  hled->led_mode = led_mode;
-  hled->prev_led_mode = led_mode;
-  hled->led_active_level = led_active_level;
-  /* start with the LED inactive at init */
-  HAL_GPIO_WritePin(hled->GPIOx, hled->GPIO_Pin, !led_active_level);
+	hled->GPIOx = GPIOx;
+	hled->GPIO_Pin = GPIO_Pin;
+	hled->led_mode = led_mode;
+	hled->prev_led_mode = led_mode;
+	hled->led_active_level = led_active_level;
+	/* start with the LED inactive at init */
+	HAL_GPIO_WritePin(hled->GPIOx, hled->GPIO_Pin, !led_active_level);
 
 }
 
@@ -55,37 +55,37 @@ void led_init(LED_HandleTypeDef* hled, GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, l
 void led_update(LED_HandleTypeDef* hled)
 {
 
-  /* check this handle for it's current mode and update the output accordingly */
-  switch (hled->led_mode) {
-    case LED_MODE_INACTIVE:
-      HAL_GPIO_WritePin(hled->GPIOx, hled->GPIO_Pin, !hled->led_active_level);
-      break;
-    case LED_MODE_ACTIVE:
-      HAL_GPIO_WritePin(hled->GPIOx, hled->GPIO_Pin, hled->led_active_level);
-      break;
-    case LED_MODE_RXTX_ACTIVE:
-      if ((HAL_GetTick() -  hled->led_rxtx_start_tick) > LED_RXTX_ACTIVE_TIME_MS) {
-        /* Turn off LED and change the mode to OFF */
-        HAL_GPIO_WritePin(hled->GPIOx, hled->GPIO_Pin, !hled->led_active_level);
-        hled->led_mode = LED_MODE_RXTX_HOLDOFF;
-        hled->led_rxtx_start_tick = HAL_GetTick();
-      }
-      break;
-    case LED_MODE_RXTX_HOLDOFF:
-      /* prevent LED from going solid ON for high traffic */
-      if ((HAL_GetTick() - hled->led_rxtx_start_tick) > LED_RXTX_INACTIVE_TIME_MS) {
-        /* Return the LED to it's previous state */
-        hled->led_mode = hled->prev_led_mode;
-      }
-      break;
-    case LED_MODE_BLINK:
-      if ((HAL_GetTick() - hled->blink_toggle_start_tick) > (hled->blink_period_ms/2)){
-        HAL_GPIO_TogglePin(hled->GPIOx, hled->GPIO_Pin);
-        hled->blink_toggle_start_tick = HAL_GetTick();
-      }
-    default:
-      break;
-  }
+	/* check this handle for it's current mode and update the output accordingly */
+	switch (hled->led_mode) {
+		case LED_MODE_INACTIVE:
+			HAL_GPIO_WritePin(hled->GPIOx, hled->GPIO_Pin, !hled->led_active_level);
+			break;
+		case LED_MODE_ACTIVE:
+			HAL_GPIO_WritePin(hled->GPIOx, hled->GPIO_Pin, hled->led_active_level);
+			break;
+		case LED_MODE_RXTX_ACTIVE:
+			if ((HAL_GetTick() -  hled->led_rxtx_start_tick) > LED_RXTX_ACTIVE_TIME_MS) {
+				/* Turn off LED and change the mode to OFF */
+				HAL_GPIO_WritePin(hled->GPIOx, hled->GPIO_Pin, !hled->led_active_level);
+				hled->led_mode = LED_MODE_RXTX_HOLDOFF;
+				hled->led_rxtx_start_tick = HAL_GetTick();
+			}
+			break;
+		case LED_MODE_RXTX_HOLDOFF:
+			/* prevent LED from going solid ON for high traffic */
+			if ((HAL_GetTick() - hled->led_rxtx_start_tick) > LED_RXTX_INACTIVE_TIME_MS) {
+				/* Return the LED to it's previous state */
+				hled->led_mode = hled->prev_led_mode;
+			}
+			break;
+		case LED_MODE_BLINK:
+			if ((HAL_GetTick() - hled->blink_toggle_start_tick) > (hled->blink_period_ms/2)) {
+				HAL_GPIO_TogglePin(hled->GPIOx, hled->GPIO_Pin);
+				hled->blink_toggle_start_tick = HAL_GetTick();
+			}
+		default:
+			break;
+	}
 }
 
 /** @brief Function to read the LED current mode
@@ -94,7 +94,7 @@ void led_update(LED_HandleTypeDef* hled)
  */
 led_mode_t led_get_mode(LED_HandleTypeDef* hled)
 {
-  return hled->led_mode;
+	return hled->led_mode;
 }
 
 /** @brief Function to set the LED into it's active mode
@@ -103,9 +103,9 @@ led_mode_t led_get_mode(LED_HandleTypeDef* hled)
  */
 void led_set_active(LED_HandleTypeDef* hled)
 {
-  /* set the mode flag - the handler will update the GPIO */
-  hled->prev_led_mode = LED_MODE_ACTIVE;
-  hled->led_mode = LED_MODE_ACTIVE;
+	/* set the mode flag - the handler will update the GPIO */
+	hled->prev_led_mode = LED_MODE_ACTIVE;
+	hled->led_mode = LED_MODE_ACTIVE;
 }
 
 /** @brief Function to set the LED into it's inactive mode
@@ -114,9 +114,9 @@ void led_set_active(LED_HandleTypeDef* hled)
  */
 void led_set_inactive(LED_HandleTypeDef* hled)
 {
-  /* set the mode flag - the handler will update the GPIO */
-  hled->prev_led_mode = LED_MODE_INACTIVE;
-  hled->led_mode = LED_MODE_INACTIVE;
+	/* set the mode flag - the handler will update the GPIO */
+	hled->prev_led_mode = LED_MODE_INACTIVE;
+	hled->led_mode = LED_MODE_INACTIVE;
 }
 
 /** @brief Function to indicate to the LED handler that an RX or TX event took place to pulse the output
@@ -125,13 +125,13 @@ void led_set_inactive(LED_HandleTypeDef* hled)
  */
 void led_indicate_rxtx(LED_HandleTypeDef* hled)
 {
-  /* check to see if we have already started to indicate an RXTX to prevent steady state LED on high message rates */
-  if ((hled->led_mode != LED_MODE_RXTX_ACTIVE)  && (hled->led_mode != LED_MODE_RXTX_HOLDOFF)) {
-    /* turn on the LED for a brief period of time to indicate a message was sent */
-    HAL_GPIO_WritePin(hled->GPIOx, hled->GPIO_Pin, hled->led_active_level);
-    hled->led_mode = LED_MODE_RXTX_ACTIVE;
-    hled->led_rxtx_start_tick = HAL_GetTick();
-  }
+	/* check to see if we have already started to indicate an RXTX to prevent steady state LED on high message rates */
+	if ((hled->led_mode != LED_MODE_RXTX_ACTIVE)  && (hled->led_mode != LED_MODE_RXTX_HOLDOFF)) {
+		/* turn on the LED for a brief period of time to indicate a message was sent */
+		HAL_GPIO_WritePin(hled->GPIOx, hled->GPIO_Pin, hled->led_active_level);
+		hled->led_mode = LED_MODE_RXTX_ACTIVE;
+		hled->led_rxtx_start_tick = HAL_GetTick();
+	}
 }
 
 /** @brief Function to initiate a blink pattern on the LED
@@ -141,7 +141,7 @@ void led_indicate_rxtx(LED_HandleTypeDef* hled)
  */
 void led_blink(LED_HandleTypeDef* hled, uint32_t period_ms)
 {
-  hled->blink_period_ms = period_ms;
-  hled->led_mode = LED_MODE_BLINK;
-  hled->blink_toggle_start_tick = HAL_GetTick();
+	hled->blink_period_ms = period_ms;
+	hled->led_mode = LED_MODE_BLINK;
+	hled->blink_toggle_start_tick = HAL_GetTick();
 }

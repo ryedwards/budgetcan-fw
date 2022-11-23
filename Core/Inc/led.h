@@ -33,35 +33,35 @@ extern "C" {
 
 /* Exported defines -----------------------------------------------------------*/
 #if !defined (LED_RXTX_ACTIVE_TIME_MS)
-#define LED_RXTX_ACTIVE_TIME_MS     50U
+#define LED_RXTX_ACTIVE_TIME_MS 50U
 #endif
 #if !defined (LED_RXTX_INACTIVE_TIME_MS)
-#define LED_RXTX_INACTIVE_TIME_MS   50U
+#define LED_RXTX_INACTIVE_TIME_MS 50U
 #endif
 
-#define LED_ACTIVE_LOW              0U
-#define LED_ACTIVE_HIGH             1U
+#define LED_ACTIVE_LOW	0U
+#define LED_ACTIVE_HIGH 1U
 
 /* Exported types ------------------------------------------------------------*/
 typedef enum {
-  LED_MODE_INACTIVE = 0,
-  LED_MODE_ACTIVE,
-  LED_MODE_RXTX_ACTIVE,
-  LED_MODE_RXTX_HOLDOFF,
-  LED_MODE_BLINK
+	LED_MODE_INACTIVE = 0,
+	LED_MODE_ACTIVE,
+	LED_MODE_RXTX_ACTIVE,
+	LED_MODE_RXTX_HOLDOFF,
+	LED_MODE_BLINK
 } led_mode_t;
 
 typedef struct {
-  GPIO_TypeDef *GPIOx;
-  uint16_t GPIO_Pin;
-  GPIO_PinState initial_state;
-  led_mode_t led_mode;
-  led_mode_t prev_led_mode;
-  uint8_t led_active_level;
-  uint32_t led_rxtx_start_tick;
-  uint32_t blink_period_ms;
-  uint32_t prev_blink_period_ms;
-  uint32_t blink_toggle_start_tick;
+	GPIO_TypeDef *GPIOx;
+	uint16_t GPIO_Pin;
+	GPIO_PinState initial_state;
+	led_mode_t led_mode;
+	led_mode_t prev_led_mode;
+	uint8_t led_active_level;
+	uint32_t led_rxtx_start_tick;
+	uint32_t blink_period_ms;
+	uint32_t prev_blink_period_ms;
+	uint32_t blink_toggle_start_tick;
 } LED_HandleTypeDef;
 
 /* Exported functions --------------------------------------------------------*/
