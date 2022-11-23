@@ -80,9 +80,6 @@ extern "C" {
 #define LIN_CONFIG_MSG_ID_DATA      0x1FFFFE81
 //#define LIN_GATEWAY_MSG_ID          0x1FFFFE82
 //#define LIN_GATEWAY_CAN_CH          hfdcan1
-#define IS_LIN_FRAME(can_id)    (can_id == LIN_CONFIG_MSG_ID_CMD \
-                                  || can_id == LIN_CONFIG_MSG_ID_DATA)
-
 
 #define QUEUE_SIZE_HOST_TO_DEV    32
 #define QUEUE_SIZE_DEV_TO_HOST    32

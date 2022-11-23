@@ -34,6 +34,8 @@ THE SOFTWARE.
 
 
 #include <string.h>
+#include "FreeRTOS.h"
+#include "queue.h"
 #include "lin.h"
 #include "main.h"
 #include "can.h"
@@ -53,6 +55,7 @@ static lin_slot_data_t lin_slot_table[LIN_MAX_USART_CHAN][LIN_MAX_SLOT_ITEMS];
 static lin_config_t lin_config_data;
 
 extern LIN_HandleTypeDef hlin1;
+extern QueueHandle_t queue_to_hostHandle;
 
 #if defined (LIN_GATEWAY_CAN_CH)
 extern CAN_HANDLE_TYPEDEF LIN_GATEWAY_CAN_CH;
@@ -75,6 +78,14 @@ void lin_init(LIN_HandleTypeDef* hlin, uint8_t lin_instance, UART_HandleTypeDef*
 	hlin->huart = huart;
 	hlin->lin_state = LIN_IDLE_AWAIT_BREAK;
 	hlin->lin_instance = lin_instance;
+}
+
+void lin_process_frame(struct gs_host_frame* frame)
+{
+	lin_config((frame->can_id & 0x1FFFFFFF), frame->classic_can->data);
+	frame->flags = 0x0;
+	frame->reserved = 0x0;
+	xQueueSendToFront(queue_to_hostHandle, frame, 0);
 }
 
 void lin_handle_uart_rx_IRQ(LIN_HandleTypeDef* hlin)

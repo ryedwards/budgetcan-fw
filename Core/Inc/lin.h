@@ -39,6 +39,7 @@ extern "C" {
 
 #include "main.h"
 #include "board.h"
+#include "gs_usb.h"
 
 #if defined(LIN_SUPPORT)
 /* Exported defines -----------------------------------------------------------*/
@@ -57,6 +58,9 @@ extern "C" {
 #if !defined(LIN_CONFIG_MSG_ID_DATA)
 #define LIN_CONFIG_MSG_ID_DATA 0x1FFFFE81
 #endif
+
+#define IS_LIN_FRAME(can_id) ((can_id  & 0x1FFFFFFF) == LIN_CONFIG_MSG_ID_CMD \
+                            || (can_id  & 0x1FFFFFFF) == LIN_CONFIG_MSG_ID_DATA)
 
 /* Exported types ------------------------------------------------------------*/
 typedef enum {
@@ -152,6 +156,7 @@ typedef struct {
 
 /* Exported functions --------------------------------------------------------*/
 void lin_init(LIN_HandleTypeDef* hlin, uint8_t lin_instance, UART_HandleTypeDef* huart);
+void lin_process_frame(struct gs_host_frame* frame);
 void lin_handler_task(LIN_HandleTypeDef* hlin);
 void lin_handle_uart_rx_IRQ(LIN_HandleTypeDef* hlin);
 uint8_t lin_config(uint32_t msg_id, uint8_t *data);
