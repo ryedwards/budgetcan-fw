@@ -74,7 +74,22 @@ extern void SystemClock_Config(void);
   */
 void HAL_PCD_SetupStageCallback(PCD_HandleTypeDef *hpcd)
 {
-  USBD_LL_SetupStage((USBD_HandleTypeDef*)hpcd->pData, (uint8_t *)hpcd->Setup);
+  USBD_HandleTypeDef *pdev = (USBD_HandleTypeDef*)hpcd->pData;
+	USBD_ParseSetupRequest((USBD_SetupReqTypedef*)&pdev->request, (uint8_t*)hpcd->Setup);
+
+	bool request_was_handled = false;
+
+	if ((pdev->request.bmRequest & 0x1F) == USB_REQ_RECIPIENT_DEVICE ) { // device request
+		request_was_handled = USBD_GS_CAN_CustomDeviceRequest(pdev, &pdev->request);
+	}
+
+	if ((pdev->request.bmRequest & 0x1F) == USB_REQ_RECIPIENT_INTERFACE ) { // interface request
+		request_was_handled = USBD_GS_CAN_CustomInterfaceRequest(pdev, &pdev->request);
+	}
+
+	if (!request_was_handled) {
+		USBD_LL_SetupStage((USBD_HandleTypeDef*)hpcd->pData, (uint8_t *)hpcd->Setup);
+	}
 }
 
 /**
