@@ -79,6 +79,7 @@ extern "C" {
 
 #define CAN_NUM_CHANNELS  2
 #define CAN_CLOCK_SPEED   40000000
+#define CANFD_FEATURE     1
 
 #define BOARD_TIM2_PRESCALER      64-1
 

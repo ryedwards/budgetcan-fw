@@ -68,6 +68,7 @@ extern "C" {
 
 #define CAN_NUM_CHANNELS  1
 #define CAN_CLOCK_SPEED   80000000
+#define CANFD_FEATURE     1
 
 #define QUEUE_SIZE_HOST_TO_DEV    32
 #define QUEUE_SIZE_DEV_TO_HOST    32
