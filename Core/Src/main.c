@@ -220,7 +220,7 @@ void task_main(void *argument)
       if (can_send(hGS_CAN.channels[frame_object.frame.channel], &frame_object.frame)) {
         /* Echo sent frame back to host */
         frame_object.frame.reserved = 0x0;
-        xQueueSendToFront(queue_to_hostHandle, &frame_object.frame, 0);
+        xQueueSendToBack(queue_to_hostHandle, &frame_object.frame, 0);
         can_on_tx_cb(frame_object.frame.channel, &frame_object.frame);
       }
       else {
