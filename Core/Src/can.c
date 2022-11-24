@@ -312,7 +312,6 @@ bool can_send(CAN_HANDLE_TYPEDEF *hcan, struct gs_host_frame *frame)
 		return false;
 	}
 	else {
-		can_on_tx_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan), frame);
 		return true;
 	}
 #elif defined(FDCAN1)
@@ -357,7 +356,6 @@ bool can_send(CAN_HANDLE_TYPEDEF *hcan, struct gs_host_frame *frame)
 		return false;
 	}
 	else {
-		can_on_tx_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan), frame);
 		return true;
 	}
 #endif
@@ -422,8 +420,6 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 
 	/* put this CAN message into the queue to send to host */
 	xQueueSendToBackFromISR(queue_to_hostHandle, &frame_object.frame, NULL);
-
-	can_on_rx_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan), &frame_object.frame);
 }
 #elif defined(FDCAN1)
 void HAL_FDCAN_RxFifo0Callback(CAN_HANDLE_TYPEDEF *hcan, uint32_t RxFifo0ITs)
@@ -466,8 +462,6 @@ void HAL_FDCAN_RxFifo0Callback(CAN_HANDLE_TYPEDEF *hcan, uint32_t RxFifo0ITs)
 
 	/* put this CAN message into the queue to send to host */
 	xQueueSendToBackFromISR(queue_to_hostHandle, &frame_object.frame, NULL);
-
-	can_on_rx_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan), &frame_object.frame);
 }
 #endif
 

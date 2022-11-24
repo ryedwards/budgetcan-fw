@@ -221,6 +221,7 @@ void task_main(void *argument)
         /* Echo sent frame back to host */
         frame_object.frame.reserved = 0x0;
         xQueueSendToFront(queue_to_hostHandle, &frame_object.frame, 0);
+        can_on_tx_cb(frame_object.frame.channel, &frame_object.frame);
       }
       else {
         /* throw the message back onto the queue */
@@ -230,7 +231,10 @@ void task_main(void *argument)
 
     /* Check the queue to see if we have data TO the host to handle */
     if (xQueueReceive(queue_to_hostHandle, &frame_object.frame, 0) == pdPASS) {
-      if (USBD_GS_CAN_SendFrame(&hUSB, &frame_object.frame) != USBD_OK) {
+      if (USBD_GS_CAN_SendFrame(&hUSB, &frame_object.frame) == USBD_OK) {
+        can_on_rx_cb(frame_object.frame.channel, &frame_object.frame);
+      }
+      else {
         /* throw the message back onto the queue */
         xQueueSendToFront(queue_to_hostHandle, &frame_object.frame, 0);
       }
