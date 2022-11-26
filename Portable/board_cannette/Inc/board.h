@@ -41,7 +41,7 @@ extern "C" {
 #define USBD_LANGID_STRING           1033
 #define USBD_MANUFACTURER_STRING     (uint8_t*) "cannette.io"
 #define USBD_PID_FS                  0x606F
-#define USBD_PRODUCT_STRING_FS       (uint8_t*) "cannatte"
+#define USBD_PRODUCT_STRING_FS       (uint8_t*) "cannette"
 #define USBD_CONFIGURATION_STRING    (uint8_t*) "gs_usb"
 #define USBD_INTERFACE_STRING        (uint8_t*) "gs_usb interface"
 #define DFU_INTERFACE_STRING        (uint8_t*) "cannette DFU interface"
@@ -69,8 +69,8 @@ extern "C" {
 #define nSI86_EN_GPIO_Port GPIOC
 #define CAN_nSTANDBY_Pin GPIO_PIN_14
 #define CAN_nSTANDBY_GPIO_Port GPIOC
-#define nDCDC_EN_Pin GPIO_PIN_15
-#define nDCDC_EN_GPIO_Port GPIOC
+#define DCDC_EN_Pin GPIO_PIN_15
+#define DCDC_EN_GPIO_Port GPIOC
 #define SENSE_5V_Pin GPIO_PIN_5
 #define SENSE_5V_GPIO_Port GPIOA
 #define LED_TX_Pin GPIO_PIN_8
