@@ -80,7 +80,6 @@ typedef struct {
 	bool pad_pkts_to_max_pkt_size;
 	bool timestamps_enabled;
 	uint32_t sof_timestamp_us;
-	bool canfd_enabled[CAN_NUM_CHANNELS];
 } USBD_GS_CAN_HandleTypeDef __attribute__ ((aligned (4)));
 
 /* Exported functions --------------------------------------------------------*/
