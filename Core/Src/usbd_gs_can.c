@@ -225,7 +225,7 @@ static const struct gs_device_bt_const USBD_GS_CAN_btconst = {
 			   | GS_CAN_FEATURE_FD
 			   | GS_CAN_FEATURE_BT_CONST_EXT
 #endif
-#if defined(CAN_TERM_SUPPORT)
+#if defined(CAN_TERM_FEATURE_ENABLED)
 			   | GS_CAN_FEATURE_TERMINATION
 #endif
 	,
@@ -251,7 +251,7 @@ static const struct gs_device_bt_const_extended USBD_GS_CAN_btconst_extended = {
 			   | GS_CAN_FEATURE_FD
 			   | GS_CAN_FEATURE_BT_CONST_EXT
 #endif
-#if defined(CAN_TERM_SUPPORT)
+#if defined(CAN_TERM_FEATURE_ENABLED)
 			   | GS_CAN_FEATURE_TERMINATION
 #endif
 
