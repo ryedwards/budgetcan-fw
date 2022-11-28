@@ -42,7 +42,7 @@ THE SOFTWARE.
 #include "usbd_gs_can.h"
 #include "board.h"
 
-#if defined(LIN_SUPPORT)
+#if defined(LIN_FEATURE_ENABLED)
 #define LIN_SYNC_BYTE		  0x55u
 #define LIN_GET_PID_BIT(x,y) (((x) >> (y)) & 0x01u)
 #define LIN_ID_MASK			  0x3Fu
@@ -361,4 +361,4 @@ static void lin_can_gateway_tx(LIN_HandleTypeDef* hlin)
 	UNUSED(hlin);
 #endif
 }
-#endif /* LIN_SUPPORT */
+#endif /* LIN_FEATURE_ENABLED */

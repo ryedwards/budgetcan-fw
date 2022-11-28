@@ -41,7 +41,7 @@ extern "C" {
 #include "board.h"
 #include "gs_usb.h"
 
-#if defined(LIN_SUPPORT)
+#if defined(LIN_FEATURE_ENABLED)
 /* Exported defines -----------------------------------------------------------*/
 #if !defined(LIN_MAX_USART_CHAN)
 #define LIN_MAX_USART_CHAN 1U
@@ -161,7 +161,7 @@ void lin_handler_task(LIN_HandleTypeDef* hlin);
 void lin_handle_uart_rx_IRQ(LIN_HandleTypeDef* hlin);
 uint8_t lin_config(uint32_t msg_id, uint8_t *data);
 
-#endif /* LIN_SUPPORT */
+#endif /* LIN_FEATURE_ENABLED */
 
 #ifdef __cplusplus
 }

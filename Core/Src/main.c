@@ -211,12 +211,12 @@ void task_main(void *argument)
   {
     /* Check the queue to see if we have data FROM the host to handle */
     if (xQueueReceive(queue_from_hostHandle, &frame_object.frame, 0) == pdPASS){
-#if defined(LIN_SUPPORT)
+#if defined(LIN_FEATURE_ENABLED)
       if (IS_LIN_FRAME(frame_object.frame.can_id)) {
         lin_process_frame(&frame_object.frame);
         continue; /* just loop again so this frame isn't sent on CAN bus */
       }
-#endif /* LIN_SUPPORT */
+#endif /* LIN_FEATURE_ENABLED */
       if (can_send(hGS_CAN.channels[frame_object.frame.channel], &frame_object.frame)) {
         /* Echo sent frame back to host */
         frame_object.frame.reserved = 0x0;
