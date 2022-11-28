@@ -34,7 +34,7 @@ THE SOFTWARE.
 #include "led.h"
 
 #define TASK_MY_PROGRAM_STACK_SIZE (512 / sizeof(portSTACK_TYPE))
-#define TASK_MY_PROGRAM_PRIORITY (tskIDLE_PRIORITY + 3)
+#define TASK_MY_PROGRAM_PRIORITY   (tskIDLE_PRIORITY + 3)
 
 extern void main_usbd_gs_can_set_channel_cb(USBD_HandleTypeDef *hUSB);
 
@@ -57,191 +57,191 @@ static void task_my_program(void *argument);
   */
 void SystemClock_Config(void)
 {
-  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+	RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+	RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-  /** Supply configuration update enable
-  */
-  HAL_PWREx_ConfigSupply(PWR_LDO_SUPPLY);
+	/** Supply configuration update enable
+	*/
+	HAL_PWREx_ConfigSupply(PWR_LDO_SUPPLY);
 
-  /** Configure the main internal regulator output voltage
-  */
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
+	/** Configure the main internal regulator output voltage
+	*/
+	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
 
-  while(!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
+	while (!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
 
-  /** Initializes the RCC Oscillators according to the specified parameters
-  * in the RCC_OscInitTypeDef structure.
-  */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI48|RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_DIV1;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.HSI48State = RCC_HSI48_ON;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 4;
-  RCC_OscInitStruct.PLL.PLLN = 20;
-  RCC_OscInitStruct.PLL.PLLP = 2;
-  RCC_OscInitStruct.PLL.PLLQ = 8;
-  RCC_OscInitStruct.PLL.PLLR = 2;
-  RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1VCIRANGE_3;
-  RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1VCOWIDE;
-  RCC_OscInitStruct.PLL.PLLFRACN = 0;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
+	/** Initializes the RCC Oscillators according to the specified parameters
+	* in the RCC_OscInitTypeDef structure.
+	*/
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI48|RCC_OSCILLATORTYPE_HSI;
+	RCC_OscInitStruct.HSIState = RCC_HSI_DIV1;
+	RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+	RCC_OscInitStruct.HSI48State = RCC_HSI48_ON;
+	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+	RCC_OscInitStruct.PLL.PLLM = 4;
+	RCC_OscInitStruct.PLL.PLLN = 20;
+	RCC_OscInitStruct.PLL.PLLP = 2;
+	RCC_OscInitStruct.PLL.PLLQ = 8;
+	RCC_OscInitStruct.PLL.PLLR = 2;
+	RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1VCIRANGE_3;
+	RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1VCOWIDE;
+	RCC_OscInitStruct.PLL.PLLFRACN = 0;
+	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+	{
+		Error_Handler();
+	}
 
-  /** Initializes the CPU, AHB and APB buses clocks
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2
-                              |RCC_CLOCKTYPE_D3PCLK1|RCC_CLOCKTYPE_D1PCLK1;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.SYSCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV2;
-  RCC_ClkInitStruct.APB3CLKDivider = RCC_APB3_DIV2;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_APB1_DIV2;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_APB2_DIV2;
-  RCC_ClkInitStruct.APB4CLKDivider = RCC_APB4_DIV2;
+	/** Initializes the CPU, AHB and APB buses clocks
+	*/
+	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+								  |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2
+								  |RCC_CLOCKTYPE_D3PCLK1|RCC_CLOCKTYPE_D1PCLK1;
+	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+	RCC_ClkInitStruct.SYSCLKDivider = RCC_SYSCLK_DIV1;
+	RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV2;
+	RCC_ClkInitStruct.APB3CLKDivider = RCC_APB3_DIV2;
+	RCC_ClkInitStruct.APB1CLKDivider = RCC_APB1_DIV2;
+	RCC_ClkInitStruct.APB2CLKDivider = RCC_APB2_DIV2;
+	RCC_ClkInitStruct.APB4CLKDivider = RCC_APB4_DIV2;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
-  {
-    Error_Handler();
-  }
+	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
+	{
+		Error_Handler();
+	}
 }
 
 /** Configure pins
 */
 void MX_GPIO_Init(void)
 {
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-  /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOE_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
-  __HAL_RCC_GPIOD_CLK_ENABLE();
+	/* GPIO Ports Clock Enable */
+	__HAL_RCC_GPIOE_CLK_ENABLE();
+	__HAL_RCC_GPIOA_CLK_ENABLE();
+	__HAL_RCC_GPIOC_CLK_ENABLE();
+	__HAL_RCC_GPIOB_CLK_ENABLE();
+	__HAL_RCC_GPIOD_CLK_ENABLE();
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
+	/*Configure GPIO pin Output Level */
+	HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : USER_BTN_K1_Pin */
-  GPIO_InitStruct.Pin = USER_BTN_K1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(USER_BTN_K1_GPIO_Port, &GPIO_InitStruct);
+	/*Configure GPIO pin : USER_BTN_K1_Pin */
+	GPIO_InitStruct.Pin = USER_BTN_K1_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	GPIO_InitStruct.Pull = GPIO_PULLUP;
+	HAL_GPIO_Init(USER_BTN_K1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : LED1_Pin */
-  GPIO_InitStruct.Pin = LED1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LED1_GPIO_Port, &GPIO_InitStruct);
+	/*Configure GPIO pin : LED1_Pin */
+	GPIO_InitStruct.Pin = LED1_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(LED1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : USER_BTN_K2_Pin */
-  GPIO_InitStruct.Pin = USER_BTN_K2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(USER_BTN_K2_GPIO_Port, &GPIO_InitStruct);
+	/*Configure GPIO pin : USER_BTN_K2_Pin */
+	GPIO_InitStruct.Pin = USER_BTN_K2_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	GPIO_InitStruct.Pull = GPIO_PULLUP;
+	HAL_GPIO_Init(USER_BTN_K2_GPIO_Port, &GPIO_InitStruct);
 }
 
 static void task_my_program(void *argument)
 {
-  UNUSED(argument);
-  
-  uint8_t prev_pressed_state = GPIO_PIN_SET;
-  static struct gs_host_frame_object frame_object;
-  /* Infinite loop */
-  for(;;) {
-    /* if GPIO is pressed then send*/
-    if (HAL_GPIO_ReadPin(USER_BTN_K1_GPIO_Port, USER_BTN_K1_Pin) == GPIO_PIN_RESET && prev_pressed_state != GPIO_PIN_RESET) {
-      prev_pressed_state = GPIO_PIN_RESET;
+	UNUSED(argument);
 
-      frame_object.frame.can_dlc = 8;
-      frame_object.frame.can_id = 0x123;
-      frame_object.frame.channel = 0;
-      frame_object.frame.echo_id = 0xFFFFFFFF;
-      frame_object.frame.flags = 0;
-      frame_object.frame.classic_can->data[0] = 0x11;
-      frame_object.frame.classic_can->data[1] = 0x22;
-      frame_object.frame.classic_can->data[2] = 0x34;
-      frame_object.frame.classic_can->data[3] = 0x44;
-      frame_object.frame.classic_can->data[4] = 0x55;
-      frame_object.frame.classic_can->data[5] = 0x66;
-      frame_object.frame.classic_can->data[6] = 0x77;
-      frame_object.frame.classic_can->data[7] = 0x88;
-      frame_object.frame.classic_can_ts->timestamp_us = __HAL_TIM_GET_COUNTER(&htim2);
-      if (host_channel_is_active) {
-        xQueueSendToBack(queue_to_hostHandle, &frame_object.frame, 0);
-      }
-    }
-    
-    if(HAL_GPIO_ReadPin(USER_BTN_K1_GPIO_Port, USER_BTN_K1_Pin) == GPIO_PIN_SET) {
-      prev_pressed_state = GPIO_PIN_SET;
-    }
+	uint8_t prev_pressed_state = GPIO_PIN_SET;
+	static struct gs_host_frame_object frame_object;
+	/* Infinite loop */
+	for (;;) {
+		/* if GPIO is pressed then send*/
+		if (HAL_GPIO_ReadPin(USER_BTN_K1_GPIO_Port, USER_BTN_K1_Pin) == GPIO_PIN_RESET && prev_pressed_state != GPIO_PIN_RESET) {
+			prev_pressed_state = GPIO_PIN_RESET;
 
-    vTaskDelay(1);
-  }
+			frame_object.frame.can_dlc = 8;
+			frame_object.frame.can_id = 0x123;
+			frame_object.frame.channel = 0;
+			frame_object.frame.echo_id = 0xFFFFFFFF;
+			frame_object.frame.flags = 0;
+			frame_object.frame.classic_can->data[0] = 0x11;
+			frame_object.frame.classic_can->data[1] = 0x22;
+			frame_object.frame.classic_can->data[2] = 0x34;
+			frame_object.frame.classic_can->data[3] = 0x44;
+			frame_object.frame.classic_can->data[4] = 0x55;
+			frame_object.frame.classic_can->data[5] = 0x66;
+			frame_object.frame.classic_can->data[6] = 0x77;
+			frame_object.frame.classic_can->data[7] = 0x88;
+			frame_object.frame.classic_can_ts->timestamp_us = __HAL_TIM_GET_COUNTER(&htim2);
+			if (host_channel_is_active) {
+				xQueueSendToBack(queue_to_hostHandle, &frame_object.frame, 0);
+			}
+		}
+
+		if (HAL_GPIO_ReadPin(USER_BTN_K1_GPIO_Port, USER_BTN_K1_Pin) == GPIO_PIN_SET) {
+			prev_pressed_state = GPIO_PIN_SET;
+		}
+
+		vTaskDelay(1);
+	}
 }
 
 void main_init_cb(void)
 {
-  hGS_CAN.channels[0] = &hfdcan1;
-  hGS_CAN.channels[1] = &hfdcan2;
-  can_init(hGS_CAN.channels[0], FDCAN1);
-  can_init(hGS_CAN.channels[1], FDCAN2);
-  led_init(&hled1, LED1_GPIO_Port, LED1_Pin, LED_MODE_INACTIVE, LED_ACTIVE_LOW);
-  host_channel_is_active = false;
+	hGS_CAN.channels[0] = &hfdcan1;
+	hGS_CAN.channels[1] = &hfdcan2;
+	can_init(hGS_CAN.channels[0], FDCAN1);
+	can_init(hGS_CAN.channels[1], FDCAN2);
+	led_init(&hled1, LED1_GPIO_Port, LED1_Pin, LED_MODE_INACTIVE, LED_ACTIVE_LOW);
+	host_channel_is_active = false;
 }
 
 void main_rtos_init_cb(void)
 {
-  xTaskCreate(task_my_program, "MyProgTask", TASK_MY_PROGRAM_STACK_SIZE, NULL,
-              TASK_MY_PROGRAM_PRIORITY, &xCreatedMyProgramTask);  
+	xTaskCreate(task_my_program, "MyProgTask", TASK_MY_PROGRAM_STACK_SIZE, NULL,
+				TASK_MY_PROGRAM_PRIORITY, &xCreatedMyProgramTask);
 }
 
 void main_task_cb(void)
 {
-  /* update all the LEDs */
- led_update(&hled1);
+	/* update all the LEDs */
+	led_update(&hled1);
 }
 
 void can_on_enable_cb(uint8_t channel)
 {
-  UNUSED(channel);
-  led_set_active(&hled1);
-  host_channel_is_active = true;
+	UNUSED(channel);
+	led_set_active(&hled1);
+	host_channel_is_active = true;
 }
 
 void can_on_disable_cb(uint8_t channel)
 {
-  UNUSED(channel);
-  led_set_inactive(&hled1);
-  host_channel_is_active = false;
+	UNUSED(channel);
+	led_set_inactive(&hled1);
+	host_channel_is_active = false;
 }
 
 void can_on_tx_cb(uint8_t channel, struct gs_host_frame *frame)
 {
-  UNUSED(channel);
-  UNUSED(frame);
-  led_indicate_rxtx(&hled1);
+	UNUSED(channel);
+	UNUSED(frame);
+	led_indicate_rxtx(&hled1);
 }
 
 void can_on_rx_cb(uint8_t channel, struct gs_host_frame *frame)
 {
-  UNUSED(channel);
-  UNUSED(frame);
-  led_indicate_rxtx(&hled1);
+	UNUSED(channel);
+	UNUSED(frame);
+	led_indicate_rxtx(&hled1);
 }
 
 void can_identify_cb(uint32_t do_identify)
 {
-  if (do_identify) {
-    led_blink(&hled1, 1000);
-  }
-  else {
-    led_restore_prev_mode(&hled1);
-  }
+	if (do_identify) {
+		led_blink_start(&hled1, 250);
+	}
+	else {
+		led_blink_stop(&hled1);
+	}
 }
