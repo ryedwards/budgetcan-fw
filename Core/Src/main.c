@@ -40,7 +40,6 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define IS_IRQ_MODE()             ( (SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) != 0)
 #define RESET_TO_BOOTLOADER_MAGIC_CODE 0xDEADBEEF
 
 #define TASK_MAIN_STACK_SIZE (configMINIMAL_STACK_SIZE)
