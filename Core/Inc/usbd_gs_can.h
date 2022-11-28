@@ -52,7 +52,7 @@ extern "C" {
 extern USBD_ClassTypeDef USBD_GS_CAN;
 
 
-#if defined(CANFD_FEATURE)
+#if defined(CANFD_FEATURE_ENABLED)
 #if !defined(FDCAN1)
 #error This CAN type does not support CANFD!!!
 #endif
