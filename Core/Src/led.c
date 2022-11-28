@@ -139,9 +139,18 @@ void led_indicate_rxtx(LED_HandleTypeDef* hled)
  *  @param uint32_t period_ms - The period in ms that the LED should blink.
  *  @retval None
  */
-void led_blink(LED_HandleTypeDef* hled, uint32_t period_ms)
+void led_blink_start(LED_HandleTypeDef* hled, uint32_t period_ms)
 {
 	hled->blink_period_ms = period_ms;
 	hled->led_mode = LED_MODE_BLINK;
 	hled->blink_toggle_start_tick = HAL_GetTick();
+}
+
+/** @brief Function to stop a blink pattern on the LED
+ *  @param LED_HandleTypeDef* hled - The pointer to the handle.
+ *  @retval None
+ */
+void led_blink_stop(LED_HandleTypeDef* hled)
+{
+	hled->led_mode = hled->prev_led_mode;
 }

@@ -60,7 +60,6 @@ typedef struct {
 	uint8_t led_active_level;
 	uint32_t led_rxtx_start_tick;
 	uint32_t blink_period_ms;
-	uint32_t prev_blink_period_ms;
 	uint32_t blink_toggle_start_tick;
 } LED_HandleTypeDef;
 
@@ -71,7 +70,8 @@ led_mode_t led_get_mode(LED_HandleTypeDef* hled);
 void led_set_active(LED_HandleTypeDef* hled);
 void led_set_inactive(LED_HandleTypeDef* hled);
 void led_indicate_rxtx(LED_HandleTypeDef* hled);
-void led_blink(LED_HandleTypeDef* hled, uint32_t period_ms);
+void led_blink_start(LED_HandleTypeDef* hled, uint32_t period_ms);
+void led_blink_stop(LED_HandleTypeDef* hled);
 
 #ifdef __cplusplus
 }
