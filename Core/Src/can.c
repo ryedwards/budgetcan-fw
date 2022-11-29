@@ -393,7 +393,7 @@ uint8_t can_get_termination(uint8_t channel)
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
 	CAN_RxHeaderTypeDef RxHeader;
-	static struct gs_host_frame_object frame_object;
+	struct gs_host_frame_object frame_object;
 	/* Get RX message */
 	if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxHeader, (uint8_t*)&frame_object.frame.classic_can->data) != HAL_OK)
 	{
@@ -426,7 +426,7 @@ void HAL_FDCAN_RxFifo0Callback(CAN_HANDLE_TYPEDEF *hcan, uint32_t RxFifo0ITs)
 {
 	UNUSED(RxFifo0ITs);
 	FDCAN_RxHeaderTypeDef RxHeader;
-	static struct gs_host_frame_object frame_object;
+	struct gs_host_frame_object frame_object;
 
 	if (HAL_FDCAN_GetRxMessage(hcan, FDCAN_RX_FIFO0, &RxHeader, frame_object.frame.canfd->data) != HAL_OK) {
 		return;
@@ -476,7 +476,7 @@ void HAL_FDCAN_RxFifo0Callback(CAN_HANDLE_TYPEDEF *hcan, uint32_t RxFifo0ITs)
 #if defined(CAN)
 void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan)
 {
-	static struct gs_host_frame_object frame_object;
+	struct gs_host_frame_object frame_object;
 	uint32_t can_err_status = hcan->Instance->ESR;
 	can_parse_error_status(can_err_status, can_last_err_status, hcan, &frame_object.frame);
 	/* put this CAN message into the queue to send to host */
@@ -488,7 +488,7 @@ void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan)
 void HAL_FDCAN_ErrorStatusCallback(CAN_HANDLE_TYPEDEF *hcan, uint32_t ErrorStatusITs)
 {
 	UNUSED(ErrorStatusITs);
-	static struct gs_host_frame_object frame_object;
+	struct gs_host_frame_object frame_object;
 	uint32_t can_err_status = hcan->Instance->PSR;
 	can_parse_error_status(can_err_status, can_last_err_status, hcan, &frame_object.frame);
 	/* put this CAN message into the queue to send to host */

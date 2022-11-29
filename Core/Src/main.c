@@ -204,7 +204,7 @@ static void MX_TIM2_Init(void)
 void task_main(void *argument)
 {
   UNUSED(argument);
-  static struct gs_host_frame_object frame_object;
+  struct gs_host_frame_object frame_object;
 
   /* Infinite loop */
   for(;;)
