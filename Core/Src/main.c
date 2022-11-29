@@ -117,7 +117,13 @@ int main(void)
 
   /* Function to allow the board to init any features */
   main_init_cb();
-  
+
+  /* Initialize the USB device */
+  USBD_Init(&hUSB, (USBD_DescriptorsTypeDef*)&FS_Desc, DEVICE_FS);
+  USBD_RegisterClass(&hUSB, &USBD_GS_CAN);
+  USBD_GS_CAN_Init(&hUSB, &hGS_CAN);
+  USBD_Start(&hUSB);
+
   /* Init the RTOS tasks */
   main_rtos_init_cb();
 
@@ -199,11 +205,6 @@ void task_main(void *argument)
 {
   UNUSED(argument);
   static struct gs_host_frame_object frame_object;
-
-  USBD_Init(&hUSB, (USBD_DescriptorsTypeDef*)&FS_Desc, DEVICE_FS);
-  USBD_RegisterClass(&hUSB, &USBD_GS_CAN);
-  USBD_GS_CAN_Init(&hUSB, &hGS_CAN);
-  USBD_Start(&hUSB);
 
   /* Infinite loop */
   for(;;)
