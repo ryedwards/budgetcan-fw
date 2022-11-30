@@ -224,7 +224,18 @@ static void task_lin(void *argument)
 	for (;;) {
 		/* LIN transmits in blocking mode so put into this task */
 		lin_handler_task(&hlin1);
-		vTaskDelay(pdMS_TO_TICKS(1));
+		vTaskDelay(pdMS_TO_TICKS(0));
+	}
+}
+
+LIN_HandleTypeDef* lin_get_handle(uint32_t msg_id)
+{
+	if ((msg_id == LIN_CONFIG_MSG_ID_CMD) 
+		|| (msg_id == LIN_CONFIG_MSG_ID_DATA)) {
+			return &hlin1;
+		}
+	else {
+		return NULL;
 	}
 }
 
