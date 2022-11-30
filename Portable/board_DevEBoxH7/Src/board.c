@@ -44,7 +44,6 @@ LED_HandleTypeDef hled1;
 
 extern USBD_GS_CAN_HandleTypeDef hGS_CAN;
 extern TIM_HandleTypeDef htim2;
-extern QueueHandle_t queue_to_hostHandle;
 
 static TaskHandle_t xCreatedMyProgramTask;
 static bool host_channel_is_active;
@@ -174,7 +173,7 @@ static void task_my_program(void *argument)
 			frame_object.frame.classic_can->data[7] = 0x88;
 			frame_object.frame.classic_can_ts->timestamp_us = __HAL_TIM_GET_COUNTER(&htim2);
 			if (host_channel_is_active) {
-				xQueueSendToBack(queue_to_hostHandle, &frame_object.frame, 0);
+				xQueueSendToBack(hGS_CAN.queue_to_hostHandle, &frame_object.frame, 0);
 			}
 		}
 
