@@ -37,9 +37,9 @@ THE SOFTWARE.
 #include "gs_usb.h"
 #include "can.h"
 
-extern QueueHandle_t queue_from_hostHandle;
 extern TIM_HandleTypeDef htim2;
 extern uint8_t USBD_StrDesc[USBD_MAX_STR_DESC_SIZ];
+extern USBD_GS_CAN_HandleTypeDef hGS_CAN;
 
 /* Configuration Descriptor */
 static const uint8_t USBD_GS_CAN_CfgDesc[USB_CAN_CONFIG_DESC_SIZ] =
@@ -550,7 +550,7 @@ static uint8_t USBD_GS_CAN_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
 	}
 
 	// Enqueue the frame we just received.
-	xQueueSendToBackFromISR(queue_from_hostHandle, &hcan->from_host_frame, NULL);
+	xQueueSendToBackFromISR(hGS_CAN.queue_from_hostHandle, &hcan->from_host_frame, NULL);
 	USBD_GS_CAN_PrepareReceive(pdev);
 	return USBD_OK;
 }

@@ -69,9 +69,6 @@ static TaskHandle_t xCreatedMainTask;
 static TaskHandle_t xCreatedQtoHostTask;
 static TaskHandle_t xCreatedQfromHostTask;
 
-QueueHandle_t queue_from_hostHandle;
-QueueHandle_t queue_to_hostHandle;
-
 USBD_HandleTypeDef hUSB;
 USBD_GS_CAN_HandleTypeDef hGS_CAN;
 
@@ -144,8 +141,8 @@ int main(void)
               TASK_Q_FROM_HOST_STACK_PRIORITY, &xCreatedQfromHostTask);
 
   /* Init the RTOS streams and queues */
-  queue_from_hostHandle = xQueueCreate(QUEUE_SIZE_HOST_TO_DEV, GS_HOST_FRAME_SIZE);
-  queue_to_hostHandle = xQueueCreate(QUEUE_SIZE_DEV_TO_HOST, GS_HOST_FRAME_SIZE);
+  hGS_CAN.queue_from_hostHandle = xQueueCreate(QUEUE_SIZE_HOST_TO_DEV, GS_HOST_FRAME_SIZE);
+  hGS_CAN.queue_to_hostHandle = xQueueCreate(QUEUE_SIZE_DEV_TO_HOST, GS_HOST_FRAME_SIZE);
 
   /* Start scheduler */
   vTaskStartScheduler();
@@ -222,8 +219,8 @@ void task_main(void *argument)
   {
     main_task_cb();
 
-    if (uxQueueSpacesAvailable(queue_to_hostHandle) == 0  ||
-        uxQueueSpacesAvailable(queue_from_hostHandle) == 0) {
+    if (uxQueueSpacesAvailable(hGS_CAN.queue_to_hostHandle) == 0  ||
+        uxQueueSpacesAvailable(hGS_CAN.queue_from_hostHandle) == 0) {
       /* TODO: we should probably shut down CAN and start over?? */
     }
 
@@ -251,7 +248,7 @@ void task_queue_from_host(void *argument)
   for(;;)
   {
     /* Check the queue to see if we have data FROM the host to handle */
-    if (xQueueReceive(queue_from_hostHandle, &frame_object.frame, portMAX_DELAY) == pdPASS){
+    if (xQueueReceive(hGS_CAN.queue_from_hostHandle, &frame_object.frame, portMAX_DELAY) == pdPASS){
 #if defined(LIN_FEATURE_ENABLED)
       if (IS_LIN_FRAME(frame_object.frame.can_id)) {
         lin_process_frame(&frame_object.frame);
@@ -261,13 +258,13 @@ void task_queue_from_host(void *argument)
       if (can_send(hGS_CAN.channels[frame_object.frame.channel], &frame_object.frame)) {
         /* Echo sent frame back to host */
         frame_object.frame.reserved = 0x0;
-        xQueueSendToBack(queue_to_hostHandle, &frame_object.frame, 0);
+        xQueueSendToBack(hGS_CAN.queue_to_hostHandle, &frame_object.frame, 0);
         can_on_tx_cb(frame_object.frame.channel, &frame_object.frame);
       }
       else {
         /* throw the message back onto the queue */
-        xQueueSendToFront(queue_from_hostHandle, &frame_object.frame, 0);
-        vTaskDelay(pdMS_TO_TICKS(1));
+        xQueueSendToFront(hGS_CAN.queue_from_hostHandle, &frame_object.frame, 0);
+        vTaskDelay(pdMS_TO_TICKS(0));
       }
     }
   }
@@ -287,14 +284,14 @@ void task_queue_to_host(void *argument)
   for(;;)
   { 
     /* Check the queue to see if we have data TO the host to handle */
-    if (xQueueReceive(queue_to_hostHandle, &frame_object.frame, portMAX_DELAY) == pdPASS) {
+    if (xQueueReceive(hGS_CAN.queue_to_hostHandle, &frame_object.frame, portMAX_DELAY) == pdPASS) {
       if (USBD_GS_CAN_SendFrame(&hUSB, &frame_object.frame) == USBD_OK) {
         can_on_rx_cb(frame_object.frame.channel, &frame_object.frame);
       }
       else {
         /* throw the message back onto the queue */
-        xQueueSendToFront(queue_to_hostHandle, &frame_object.frame, 0);
-        vTaskDelay(pdMS_TO_TICKS(1));
+        xQueueSendToFront(hGS_CAN.queue_to_hostHandle, &frame_object.frame, 0);
+        vTaskDelay(pdMS_TO_TICKS(0));
       }
     }
   }
