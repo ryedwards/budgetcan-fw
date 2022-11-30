@@ -25,16 +25,24 @@ THE SOFTWARE.
 */
 
 /* Includes ------------------------------------------------------------------*/
+#include <stdio.h>
 #include "board.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "stream_buffer.h"
 #include "usbd_gs_can.h"
 #include "can.h"
 #include "lin.h"
 #include "led.h"
 
-#define TASK_LIN_STACK_SIZE		(512 / sizeof(portSTACK_TYPE))
-#define TASK_LIN_STACK_PRIORITY (tskIDLE_PRIORITY + 1)
+#define TASK_LIN_STACK_SIZE		(configMINIMAL_STACK_SIZE)
+#define TASK_LIN_STACK_PRIORITY (tskIDLE_PRIORITY + 3)
+
+#define IS_IRQ_MODE()			( (SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) != 0)
+#define STREAM_BUFFER_PRINTF_OUT_SIZEBYTES     100U
+#define STREAM_BUFFER_PRINTF_OUT_TRIGGERLEVEL  10U
+#define TASK_PRINTF_STACK_SIZE		(configMINIMAL_STACK_SIZE)
+#define TASK_PRINTF_STACK_PRIORITY	(tskIDLE_PRIORITY + 4)
 
 LED_HandleTypeDef hled1;
 LED_HandleTypeDef hled2;
@@ -48,10 +56,15 @@ extern USBD_GS_CAN_HandleTypeDef hGS_CAN;
 LIN_HandleTypeDef hlin1;
 
 UART_HandleTypeDef huart1;
+UART_HandleTypeDef huart2;
 
 static TaskHandle_t xCreatedLINTask;
+static TaskHandle_t xCreatedPrintfTask;
+
+static StreamBufferHandle_t stream_buffer_printf_out;
 
 static void task_lin(void *argument);
+static void task_printf(void *argument);
 
 /**
   * @brief System Clock Configuration
@@ -63,12 +76,12 @@ void SystemClock_Config(void)
 	RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
 	/** Configure the main internal regulator output voltage
-	*/
+	 */
 	HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1);
 
 	/** Initializes the RCC Oscillators according to the specified parameters
-	* in the RCC_OscInitTypeDef structure.
-	*/
+	 * in the RCC_OscInitTypeDef structure.
+	 */
 	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_HSI48;
 	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
 	RCC_OscInitStruct.HSI48State = RCC_HSI48_ON;
@@ -77,19 +90,19 @@ void SystemClock_Config(void)
 	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
 	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
 	RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV1;
-	RCC_OscInitStruct.PLL.PLLN = 20;
+	RCC_OscInitStruct.PLL.PLLN = 8;
 	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-	RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV4;
-	RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV5;
+	RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
+	RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
 	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
 	{
 		Error_Handler();
 	}
 
 	/** Initializes the CPU, AHB and APB buses clocks
-	*/
+	 */
 	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-								  |RCC_CLOCKTYPE_PCLK1;
+								|RCC_CLOCKTYPE_PCLK1;
 	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
 	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
 	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
@@ -190,6 +203,54 @@ void MX_USART1_UART_Init(void)
 
 }
 
+	/**
+	 * @brief USART2 Initialization Function
+	 * @param None
+	 * @retval None
+	 */
+	static void MX_USART2_UART_Init(void)
+	{
+
+	/* USER CODE BEGIN USART2_Init 0 */
+
+	/* USER CODE END USART2_Init 0 */
+
+	/* USER CODE BEGIN USART2_Init 1 */
+
+	/* USER CODE END USART2_Init 1 */
+	huart2.Instance = USART2;
+	huart2.Init.BaudRate = 115200;
+	huart2.Init.WordLength = UART_WORDLENGTH_8B;
+	huart2.Init.StopBits = UART_STOPBITS_1;
+	huart2.Init.Parity = UART_PARITY_NONE;
+	huart2.Init.Mode = UART_MODE_TX_RX;
+	huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+	huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+	huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+	huart2.Init.ClockPrescaler = UART_PRESCALER_DIV1;
+	huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+	if (HAL_UART_Init(&huart2) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	if (HAL_UARTEx_SetTxFifoThreshold(&huart2, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	if (HAL_UARTEx_SetRxFifoThreshold(&huart2, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	if (HAL_UARTEx_DisableFifoMode(&huart2) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/* USER CODE BEGIN USART2_Init 2 */
+
+	/* USER CODE END USART2_Init 2 */
+
+	}
+
 /** @brief UART RX IRQ for this board
  *  @param None
  *  @retval None
@@ -219,6 +280,43 @@ static void task_lin(void *argument)
 	}
 }
 
+/** @brief Function to run the Printf task
+ *  @param None
+ *  @retval None
+ */
+static void task_printf(void *argument)
+{
+	UNUSED(argument);
+	uint8_t printf_bytes;
+	uint8_t rx_data[STREAM_BUFFER_PRINTF_OUT_SIZEBYTES];
+	/* Infinite loop */
+	for (;;) {
+		printf_bytes = xStreamBufferReceive(stream_buffer_printf_out, rx_data, 1, 0);
+		if (printf_bytes > 0) {
+			HAL_UART_Transmit(&huart2, rx_data, printf_bytes, 0);
+		}
+		
+		taskYIELD();
+	}
+}
+
+/**
+  * @brief  Retargets the C library printf function to the USART.
+  * @param  None
+  * @retval None
+  */
+int __io_putchar(int ch)
+{
+  if (IS_IRQ_MODE()) {
+    xStreamBufferSendFromISR(stream_buffer_printf_out,(uint8_t *)&ch, 1, NULL);
+  }
+  else {
+    xStreamBufferSend(stream_buffer_printf_out,(uint8_t *)&ch, 1, 0);
+  }
+
+  return ch;
+}
+
 void main_init_cb(void)
 {
 
@@ -239,12 +337,24 @@ void main_init_cb(void)
 	led_init(&hled2, LED2_GPIO_Port, LED2_Pin, LED_MODE_INACTIVE, LED_ACTIVE_HIGH);
 	led_init(&hled3, LED3_GPIO_Port, LED3_Pin, LED_MODE_INACTIVE, LED_ACTIVE_HIGH);
 
+	MX_USART2_UART_Init();
+
 	/* init specific to LIN */
 	MX_USART1_UART_Init();
 	lin_init(&hlin1, LIN1_CHANNEL, &huart1);
 	HAL_GPIO_WritePin(LIN1_NSLP_GPIO_Port, LIN1_NSLP_Pin, GPIO_PIN_SET);
+	
+}
+
+void main_rtos_init_cb(void)
+{
 	xTaskCreate(task_lin, "LIN Task", TASK_LIN_STACK_SIZE, NULL,
 				TASK_LIN_STACK_PRIORITY, &xCreatedLINTask);
+	xTaskCreate(task_printf, "Printf Task", TASK_PRINTF_STACK_SIZE, NULL,
+				TASK_PRINTF_STACK_PRIORITY, &xCreatedPrintfTask);
+
+	stream_buffer_printf_out = xStreamBufferCreate(STREAM_BUFFER_PRINTF_OUT_SIZEBYTES,
+											STREAM_BUFFER_PRINTF_OUT_TRIGGERLEVEL);
 }
 
 void main_task_cb(void)
@@ -257,6 +367,7 @@ void main_task_cb(void)
 
 void can_on_enable_cb(uint8_t channel)
 {
+	printf("CAN is enabled\n");
 	if (channel == 0) {
 		HAL_GPIO_WritePin(FDCAN1_nSTANDBY_GPIO_Port, FDCAN1_nSTANDBY_Pin, GPIO_PIN_RESET);
 	}
@@ -270,6 +381,7 @@ void can_on_enable_cb(uint8_t channel)
 
 void can_on_disable_cb(uint8_t channel)
 {
+	printf("CAN is disabled\n");
 	if (channel == 0) {
 		HAL_GPIO_WritePin(FDCAN1_nSTANDBY_GPIO_Port, FDCAN1_nSTANDBY_Pin, GPIO_PIN_SET);
 	}
