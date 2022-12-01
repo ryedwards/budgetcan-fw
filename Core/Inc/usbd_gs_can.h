@@ -37,6 +37,8 @@ extern "C" {
 #include <stdbool.h>
 #include "main.h"
 #include "board.h"
+#include "FreeRTOS.h"
+#include "queue.h"
 #include "usbd_def.h"
 #include "gs_usb.h"
 #include "can.h"
@@ -76,6 +78,8 @@ typedef struct {
 	USBD_SetupReqTypedef last_setup_request;
 	struct gs_host_frame_object from_host_frame;
 	CAN_HANDLE_TYPEDEF *channels[CAN_NUM_CHANNELS];
+	QueueHandle_t queue_from_hostHandle;
+	QueueHandle_t queue_to_hostHandle;
 	bool dfu_detach_requested;
 	bool pad_pkts_to_max_pkt_size;
 	bool timestamps_enabled;

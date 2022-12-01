@@ -38,8 +38,8 @@ THE SOFTWARE.
 static uint32_t can_last_err_status;
 
 extern TIM_HandleTypeDef htim2;
-extern QueueHandle_t queue_to_hostHandle;
 extern USBD_HandleTypeDef hUSB;
+extern USBD_GS_CAN_HandleTypeDef hGS_CAN;
 
 static bool can_parse_error_status(uint32_t err, uint32_t last_err, CAN_HANDLE_TYPEDEF *hcan, struct gs_host_frame *frame);
 
@@ -419,7 +419,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 	frame_object.frame.classic_can_ts->timestamp_us = __HAL_TIM_GET_COUNTER(&htim2);
 
 	/* put this CAN message into the queue to send to host */
-	xQueueSendToBackFromISR(queue_to_hostHandle, &frame_object.frame, NULL);
+	xQueueSendToBackFromISR(hGS_CAN.queue_to_hostHandle, &frame_object.frame, NULL);
 }
 #elif defined(FDCAN1)
 void HAL_FDCAN_RxFifo0Callback(CAN_HANDLE_TYPEDEF *hcan, uint32_t RxFifo0ITs)
@@ -461,7 +461,7 @@ void HAL_FDCAN_RxFifo0Callback(CAN_HANDLE_TYPEDEF *hcan, uint32_t RxFifo0ITs)
 	frame_object.frame.canfd_ts->timestamp_us = __HAL_TIM_GET_COUNTER(&htim2);
 
 	/* put this CAN message into the queue to send to host */
-	xQueueSendToBackFromISR(queue_to_hostHandle, &frame_object.frame, NULL);
+	xQueueSendToBackFromISR(hGS_CAN.queue_to_hostHandle, &frame_object.frame, NULL);
 }
 #endif
 
@@ -480,7 +480,7 @@ void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan)
 	uint32_t can_err_status = hcan->Instance->ESR;
 	can_parse_error_status(can_err_status, can_last_err_status, hcan, &frame_object.frame);
 	/* put this CAN message into the queue to send to host */
-	xQueueSendToBackFromISR(queue_to_hostHandle, &frame_object.frame, NULL);
+	xQueueSendToBackFromISR(hGS_CAN.queue_to_hostHandle, &frame_object.frame, NULL);
 	can_last_err_status = can_err_status;
 
 }
@@ -492,7 +492,7 @@ void HAL_FDCAN_ErrorStatusCallback(CAN_HANDLE_TYPEDEF *hcan, uint32_t ErrorStatu
 	uint32_t can_err_status = hcan->Instance->PSR;
 	can_parse_error_status(can_err_status, can_last_err_status, hcan, &frame_object.frame);
 	/* put this CAN message into the queue to send to host */
-	xQueueSendToBackFromISR(queue_to_hostHandle, &frame_object.frame, NULL);
+	xQueueSendToBackFromISR(hGS_CAN.queue_to_hostHandle, &frame_object.frame, NULL);
 	can_last_err_status = can_err_status;
 }
 #endif
