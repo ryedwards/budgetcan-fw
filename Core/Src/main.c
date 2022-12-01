@@ -264,7 +264,7 @@ void task_queue_from_host(void *argument)
       else {
         /* throw the message back onto the queue */
         xQueueSendToFront(hGS_CAN.queue_from_hostHandle, &frame_object.frame, 0);
-        vTaskDelay(pdMS_TO_TICKS(0));
+        vTaskDelay(pdMS_TO_TICKS(1));
       }
     }
   }
@@ -291,7 +291,7 @@ void task_queue_to_host(void *argument)
       else {
         /* throw the message back onto the queue */
         xQueueSendToFront(hGS_CAN.queue_to_hostHandle, &frame_object.frame, 0);
-        vTaskDelay(pdMS_TO_TICKS(0));
+        vTaskDelay(pdMS_TO_TICKS(1));
       }
     }
   }
