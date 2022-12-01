@@ -43,14 +43,11 @@ extern "C" {
 
 #if defined(LIN_FEATURE_ENABLED)
 /* Exported defines -----------------------------------------------------------*/
-#if !defined(LIN_MAX_USART_CHAN)
-#define LIN_MAX_USART_CHAN 1U
-#endif
 #if !defined(LIN_MAX_DATA_BYTES)
 #define LIN_MAX_DATA_BYTES 8U
 #endif
-#if !defined(LIN_MAX_SLOT_ITEMS)
-#define LIN_MAX_SLOT_ITEMS 10U
+#if !defined(LIN_MAX_SLOTS)
+#define LIN_MAX_SLOTS 10U
 #endif
 #if !defined(LIN_CONFIG_MSG_ID_CMD)
 #define LIN_CONFIG_MSG_ID_CMD 0x1FFFFE80
@@ -58,9 +55,21 @@ extern "C" {
 #if !defined(LIN_CONFIG_MSG_ID_DATA)
 #define LIN_CONFIG_MSG_ID_DATA 0x1FFFFE81
 #endif
+#if !defined(LIN_MASTER_HEADER_FRAME)
+#define LIN_MASTER_HEADER_FRAME 0x1FFFFE01
+#endif
+#if !defined(LIN_MASTER_FRAME)
+#define LIN_MASTER_FRAME 0x1FFFFE02
+#endif
 
-#define IS_LIN_FRAME(can_id) ((can_id  & 0x1FFFFFFF) == LIN_CONFIG_MSG_ID_CMD \
-                            || (can_id  & 0x1FFFFFFF) == LIN_CONFIG_MSG_ID_DATA)
+#define IS_LIN_FRAME(can_id) ((can_id & 0x1FFFFE00) == 0x1FFFFE00)
+                            
+
+#define IS_LIN_CONFIG_FRAME(can_id) ((can_id  == LIN_CONFIG_MSG_ID_CMD) \
+                            || (can_id  == LIN_CONFIG_MSG_ID_DATA))
+
+#define IS_LIN_MASTER_HEADER_FRAME(can_id) ((can_id == LIN_MASTER_HEADER_FRAME))
+#define IS_LIN_MASTER_FRAME(can_id) ((can_id == LIN_MASTER_FRAME))
 
 /* Exported types ------------------------------------------------------------*/
 typedef enum {
@@ -71,9 +80,8 @@ typedef enum {
 
 typedef enum {
 	LIN_IDLE_AWAIT_BREAK,
-	LIN_IDLE_AWAIT_SYNC,
 	LIN_PID_RX,
-	LIN_MASTER_TX_DATA,
+	LIN_MASTER_RX_PID,
 	LIN_MASTER_RX_DATA,
 	LIN_SLAVE_RX_DATA,
 	LIN_SLAVE_TX_DATA,
@@ -106,13 +114,15 @@ typedef union
 typedef struct
 {
 	uint8_t lin_rx_data_available    : 1;
+	uint8_t lin_master_req_type;
 } lin_flags_t;
 
 typedef struct
 {
 	uint8_t pid;
-	uint8_t data_length;
 	uint8_t lin_data_buffer[9];
+	uint8_t data_index;
+	uint8_t tx_msg_len;
 	uint8_t checksum;
 } lin_data_frame_t;
 
@@ -145,12 +155,14 @@ typedef struct {
 	UART_HandleTypeDef* huart;
 	lin_flags_t lin_flags;
 	uint8_t UartRxBuffer[1];
-	uint8_t lin_state;
+	lin_state_t lin_state;
 	lin_type_t lin_type;
 	lin_data_frame_t lin_data_frame;
 	uint32_t lin_rx_timeout;
 	uint8_t lin_classicChecksum;
 	uint32_t lin_baud_rate;
+	lin_config_t lin_config_data;
+	lin_slot_data_t lin_slot_table[LIN_MAX_SLOTS];
 } LIN_HandleTypeDef;
 
 
@@ -158,8 +170,8 @@ typedef struct {
 void lin_init(LIN_HandleTypeDef* hlin, uint8_t lin_instance, UART_HandleTypeDef* huart);
 void lin_process_frame(struct gs_host_frame* frame);
 void lin_handler_task(LIN_HandleTypeDef* hlin);
-void lin_handle_uart_rx_IRQ(LIN_HandleTypeDef* hlin);
-uint8_t lin_config(uint32_t msg_id, uint8_t *data);
+void lin_rx_IRQ_handler(LIN_HandleTypeDef* hlin);
+LIN_HandleTypeDef* lin_get_handle(uint32_t msg_id);
 
 #endif /* LIN_FEATURE_ENABLED */
 
