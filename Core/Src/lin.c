@@ -63,7 +63,7 @@ static uint8_t lin_data_layer_checksum(uint8_t pid, uint8_t length, const uint8_
 static void lin_erase_slot_table(LIN_HandleTypeDef* hlin);
 static void lin_disable_all_slots(LIN_HandleTypeDef* hlin);
 static void lin_can_gateway_tx(LIN_HandleTypeDef* hlin);
-static uint8_t lin_config(uint32_t msg_id, uint8_t *data);
+static uint8_t lin_config(LIN_HandleTypeDef* hlin, uint32_t msg_id, uint8_t *data);
 
 void lin_init(LIN_HandleTypeDef* hlin, uint8_t lin_instance, UART_HandleTypeDef* huart)
 {
@@ -100,18 +100,23 @@ void lin_transmit_master(LIN_HandleTypeDef* hlin, uint8_t pid)
 
 void lin_process_frame(struct gs_host_frame* frame)
 {
-	LIN_HandleTypeDef* hlin = lin_get_handle(frame->can_id);
+	uint32_t msg_id = frame->can_id & 0x1FFFFFFF;
+	
+	LIN_HandleTypeDef* hlin = lin_get_handle(msg_id);
 
-	/* if a config frame process the config */
-	if (IS_LIN_CONFIG_FRAME(frame->can_id)) {
-		lin_config(frame->can_id, frame->classic_can->data);
+	if (hlin == NULL) {
+		return;
 	}
-	else if (IS_LIN_MASTER_HEADER_FRAME(frame->can_id)) {
+	/* if a config frame process the config */
+	if (IS_LIN_CONFIG_FRAME(msg_id)) {
+		lin_config(hlin, msg_id, frame->classic_can->data);
+	}
+	else if (IS_LIN_MASTER_HEADER_FRAME(msg_id)) {
 		hlin->lin_flags.lin_master_req_type = 1;
 		hlin->lin_data_frame.pid = frame->classic_can->data[0];
 		lin_transmit_master(hlin, hlin->lin_data_frame.pid);
 	}
-	else if (IS_LIN_MASTER_FRAME(frame->can_id)) {
+	else if (IS_LIN_MASTER_FRAME(msg_id)) {
 	/* if a master frame broadcast - send message */
 		hlin->lin_flags.lin_master_req_type = 0;
 		hlin->lin_data_frame.pid = frame->classic_can->data[0];
@@ -247,14 +252,8 @@ void lin_handler_task(LIN_HandleTypeDef* hlin)
 		
 }
 
-uint8_t lin_config(uint32_t msg_id, uint8_t *data)
+static uint8_t lin_config(LIN_HandleTypeDef* hlin, uint32_t msg_id, uint8_t *data)
 {
-	LIN_HandleTypeDef* hlin = lin_get_handle(msg_id);
-
-	if (hlin == NULL) {
-		return 0;
-	}
-
 	if (msg_id == LIN_CONFIG_MSG_ID_DATA) {
 		/* store the data into the config data store */
 		memcpy(hlin->lin_config_data.lin_data.data, data, 8);
