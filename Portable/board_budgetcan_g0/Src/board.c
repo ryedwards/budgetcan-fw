@@ -230,8 +230,7 @@ static void task_lin(void *argument)
 
 LIN_HandleTypeDef* lin_get_handle(uint32_t msg_id)
 {
-	if ((msg_id == LIN_CONFIG_MSG_ID_CMD) 
-		|| (msg_id == LIN_CONFIG_MSG_ID_DATA)) {
+	if ((msg_id & 0x1FFFFE80) == 0x1FFFFE80) {
 			return &hlin1;
 		}
 	else {
