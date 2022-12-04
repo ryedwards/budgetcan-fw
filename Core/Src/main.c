@@ -42,7 +42,7 @@
 #define RESET_TO_BOOTLOADER_MAGIC_CODE 0xDEADBEEF
 
 #define TASK_MAIN_STACK_SIZE (configMINIMAL_STACK_SIZE)
-#define TASK_MAIN_STACK_PRIORITY (tskIDLE_PRIORITY + 2)
+#define TASK_MAIN_STACK_PRIORITY (tskIDLE_PRIORITY + 4)
 
 #define TASK_Q_TO_HOST_STACK_SIZE (configMINIMAL_STACK_SIZE)
 #define TASK_Q_TO_HOST_STACK_PRIORITY (tskIDLE_PRIORITY + 3)
@@ -229,8 +229,8 @@ void task_main(void *argument)
       dfu_run_bootloader();
     }
 
-    /* sleep 10ms to allow for idle */
-    vTaskDelay(pdMS_TO_TICKS(10));
+    /* sleep 1ms to allow for idle */
+    vTaskDelay(pdMS_TO_TICKS(1));
   }
 }
 
@@ -264,7 +264,7 @@ void task_queue_from_host(void *argument)
       else {
         /* throw the message back onto the queue */
         xQueueSendToFront(hGS_CAN.queue_from_hostHandle, &frame_object.frame, 0);
-        vTaskDelay(pdMS_TO_TICKS(1));
+        vTaskDelay(pdMS_TO_TICKS(0));
       }
     }
   }
@@ -291,7 +291,7 @@ void task_queue_to_host(void *argument)
       else {
         /* throw the message back onto the queue */
         xQueueSendToFront(hGS_CAN.queue_to_hostHandle, &frame_object.frame, 0);
-        vTaskDelay(pdMS_TO_TICKS(1));
+        vTaskDelay(pdMS_TO_TICKS(0));
       }
     }
   }
