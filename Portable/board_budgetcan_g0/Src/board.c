@@ -34,7 +34,7 @@ THE SOFTWARE.
 #include "led.h"
 
 #define TASK_LIN_STACK_SIZE		(configMINIMAL_STACK_SIZE)
-#define TASK_LIN_STACK_PRIORITY (tskIDLE_PRIORITY + 2)
+#define TASK_LIN_STACK_PRIORITY (tskIDLE_PRIORITY + 3)
 
 LED_HandleTypeDef hled1;
 LED_HandleTypeDef hled2;

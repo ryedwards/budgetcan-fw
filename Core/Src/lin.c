@@ -83,8 +83,12 @@ void lin_transmit_master(LIN_HandleTypeDef* hlin, uint8_t pid)
 	uint8_t sync_byte = 0x55;
 	
 	HAL_LIN_SendBreak(hlin->huart);
-	while (HAL_UART_Transmit_IT(hlin->huart, &sync_byte, 1) != HAL_OK);
-	while (HAL_UART_Transmit_IT(hlin->huart, &pid, 1) != HAL_OK);
+	while (HAL_UART_Transmit_IT(hlin->huart, &sync_byte, 1) != HAL_OK) {
+		vTaskDelay(pdMS_TO_TICKS(0));
+	}
+	while (HAL_UART_Transmit_IT(hlin->huart, &pid, 1) != HAL_OK) {
+		vTaskDelay(pdMS_TO_TICKS(0));
+	}
 	
 	hlin->lin_data_frame.pid = pid;
 	hlin->lin_data_frame.data_index = 0;
@@ -240,7 +244,9 @@ void lin_handler_task(LIN_HandleTypeDef* hlin)
 			hlin->lin_data_frame.lin_data_buffer[data_length] = checksum;
 
 			/* TX the data over the UART -- THIS IS BLOCKING */
-			while (HAL_UART_Transmit_IT(hlin->huart, hlin->lin_data_frame.lin_data_buffer, data_length + 1) != HAL_OK);
+			while (HAL_UART_Transmit_IT(hlin->huart, hlin->lin_data_frame.lin_data_buffer, data_length + 1) != HAL_OK) {
+				vTaskDelay(pdMS_TO_TICKS(0));
+			}
 
 			/* Reset the LIN state machine */
 			hlin->lin_flags.lin_rx_data_available = 0;
