@@ -62,8 +62,8 @@ extern "C" {
 #define CAN_NUM_CHANNELS		  1
 #define CAN_CLOCK_SPEED			  48000000
 
-#define QUEUE_SIZE_HOST_TO_DEV	  32
-#define QUEUE_SIZE_DEV_TO_HOST	  32
+#define QUEUE_SIZE_HOST_TO_DEV	  24
+#define QUEUE_SIZE_DEV_TO_HOST	  24
 
 #define nSI86_EN_Pin			  GPIO_PIN_13
 #define nSI86_EN_GPIO_Port		  GPIOC
