@@ -98,21 +98,21 @@ Setting up the data portion of the slot:
 
 Loading the slot table with the data provided above and immediately start responding:
 
-|CANID|DLC|Channel|Index|Flags|Action ID|PID|Len|xx|xx|
+|CANID|DLC|Command Type|Channel|Index|Flags|Action ID|PID|Len|xx|
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-|0x1FFFFE80|0x08|0x00|0x00|0x01|0x00|0x02|0x04|0x00|0x00|
+|0x1FFFFE80|0x08|0x00|0x00|0x00|0x01|0x00|0x02|0x04|0x00|
 
 When the table is already loaded you can activate and inactivate that individual slot
 
 The following is an example of setting a speicifc slot inactive (Channel 0, Index 2)
-|CANID|DLC|Channel|Index|Flags|Action ID|PID|Len|xx|xx|
+|CANID|DLC|Command Type|Channel|Index|Flags|Action ID|PID|Len|xx|
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-|0x1FFFFE80|0x08|0x00|0x02|0x00|0x00|0x00|0x00|0x00|0x00|
+|0x1FFFFE80|0x08|0x00|0x00|0x02|0x00|0x00|0x00|0x00|0x00|
 
 The following is an example of setting a speicifc slot active (Channel 0, Index 2)
-|CANID|DLC|Channel|Index|Flags|Action ID|PID|Len|xx|xx|
+|CANID|DLC|Command Type|Channel|Index|Flags|Action ID|PID|Len|xx|
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-|0x1FFFFE80|0x08|0x00|0x02|0x01|0x00|0x00|0x00|0x00|0x00|
+|0x1FFFFE80|0x08|0x00|0x00|0x02|0x01|0x00|0x00|0x00|0x00|
 
 
 Using these slot tables there are a variety of ways to carry out tasks on the LIN bus.  If you wish to perform a slave action (e.g. simulate a switch press) you could quickly load new data into the table with the steps above and the next slave request will respond with the newly loaded data.  Or you may chose to load all possible slave response scenarios into different slots and enable and disable those slots with a single command message.  The driver is designed to be as flexible as possible to preform many different LIN tasks.

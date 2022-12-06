@@ -56,6 +56,7 @@ static lin_config_t lin_config_data;
 
 extern LIN_HandleTypeDef hlin1;
 extern QueueHandle_t queue_to_hostHandle;
+extern USBD_GS_CAN_HandleTypeDef hGS_CAN;
 
 #if defined (LIN_GATEWAY_CAN_CH)
 extern CAN_HANDLE_TYPEDEF LIN_GATEWAY_CAN_CH;
@@ -85,7 +86,7 @@ void lin_process_frame(struct gs_host_frame* frame)
 	lin_config((frame->can_id & 0x1FFFFFFF), frame->classic_can->data);
 	frame->flags = 0x0;
 	frame->reserved = 0x0;
-	xQueueSendToFront(queue_to_hostHandle, frame, 0);
+	xQueueSendToFront(hGS_CAN.queue_to_hostHandle, frame, 0);
 }
 
 void lin_handle_uart_rx_IRQ(LIN_HandleTypeDef* hlin)
