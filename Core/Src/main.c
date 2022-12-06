@@ -23,7 +23,6 @@
 /* USER CODE BEGIN Includes */
 #include "FreeRTOS.h"
 #include "queue.h"
-#include "stream_buffer.h"
 #include "usbd_def.h"
 #include "usbd_desc.h"
 #include "usbd_core.h"
@@ -40,11 +39,16 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define IS_IRQ_MODE()             ( (SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) != 0)
 #define RESET_TO_BOOTLOADER_MAGIC_CODE 0xDEADBEEF
 
 #define TASK_MAIN_STACK_SIZE (configMINIMAL_STACK_SIZE)
-#define TASK_MAIN_STACK_PRIORITY (tskIDLE_PRIORITY + 2)
+#define TASK_MAIN_STACK_PRIORITY (tskIDLE_PRIORITY + 4)
+
+#define TASK_Q_TO_HOST_STACK_SIZE (configMINIMAL_STACK_SIZE)
+#define TASK_Q_TO_HOST_STACK_PRIORITY (tskIDLE_PRIORITY + 3)
+
+#define TASK_Q_FROM_HOST_STACK_SIZE (configMINIMAL_STACK_SIZE)
+#define TASK_Q_FROM_HOST_STACK_PRIORITY (tskIDLE_PRIORITY + 3)
 
 #if !defined(BOARD_TIM2_PRESCALER)
   #define BOARD_TIM2_PRESCALER    0U
@@ -62,9 +66,8 @@ TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
 static TaskHandle_t xCreatedMainTask;
-
-QueueHandle_t queue_from_hostHandle;
-QueueHandle_t queue_to_hostHandle;
+static TaskHandle_t xCreatedQtoHostTask;
+static TaskHandle_t xCreatedQfromHostTask;
 
 USBD_HandleTypeDef hUSB;
 USBD_GS_CAN_HandleTypeDef hGS_CAN;
@@ -77,6 +80,8 @@ extern void SystemClock_Config(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 static void task_main(void *argument);
+static void task_queue_to_host(void *argument);
+static void task_queue_from_host(void *argument);
 static void dfu_run_bootloader(void);
 /* USER CODE END PFP */
 
@@ -118,16 +123,26 @@ int main(void)
 
   /* Function to allow the board to init any features */
   main_init_cb();
-  
+
+  /* Initialize the USB device */
+  USBD_Init(&hUSB, (USBD_DescriptorsTypeDef*)&FS_Desc, DEVICE_FS);
+  USBD_RegisterClass(&hUSB, &USBD_GS_CAN);
+  USBD_GS_CAN_Init(&hUSB, &hGS_CAN);
+  USBD_Start(&hUSB);
+
   /* Init the RTOS tasks */
   main_rtos_init_cb();
 
   xTaskCreate(task_main, "Main Task", TASK_MAIN_STACK_SIZE, NULL,
               TASK_MAIN_STACK_PRIORITY, &xCreatedMainTask);
+  xTaskCreate(task_queue_to_host, "QtoHost", TASK_Q_TO_HOST_STACK_SIZE, NULL,
+              TASK_Q_TO_HOST_STACK_PRIORITY, &xCreatedQtoHostTask);
+  xTaskCreate(task_queue_from_host, "QfromHost", TASK_Q_FROM_HOST_STACK_SIZE, NULL,
+              TASK_Q_FROM_HOST_STACK_PRIORITY, &xCreatedQfromHostTask);
 
   /* Init the RTOS streams and queues */
-  queue_from_hostHandle = xQueueCreate(QUEUE_SIZE_HOST_TO_DEV, GS_HOST_FRAME_SIZE);
-  queue_to_hostHandle = xQueueCreate(QUEUE_SIZE_DEV_TO_HOST, GS_HOST_FRAME_SIZE);
+  hGS_CAN.queue_from_hostHandle = xQueueCreate(QUEUE_SIZE_HOST_TO_DEV, GS_HOST_FRAME_SIZE);
+  hGS_CAN.queue_to_hostHandle = xQueueCreate(QUEUE_SIZE_DEV_TO_HOST, GS_HOST_FRAME_SIZE);
 
   /* Start scheduler */
   vTaskStartScheduler();
@@ -195,22 +210,45 @@ static void MX_TIM2_Init(void)
   * @param  argument: Not used
   * @retval None
   */
-
 void task_main(void *argument)
 {
   UNUSED(argument);
-  static struct gs_host_frame_object frame_object;
 
-  USBD_Init(&hUSB, (USBD_DescriptorsTypeDef*)&FS_Desc, DEVICE_FS);
-  USBD_RegisterClass(&hUSB, &USBD_GS_CAN);
-  USBD_GS_CAN_Init(&hUSB, &hGS_CAN);
-  USBD_Start(&hUSB);
+      /* Infinite loop */
+  for(;;)
+  {
+    main_task_cb();
+
+    if (uxQueueSpacesAvailable(hGS_CAN.queue_to_hostHandle) == 0  ||
+        uxQueueSpacesAvailable(hGS_CAN.queue_from_hostHandle) == 0) {
+      /* TODO: we should probably shut down CAN and start over?? */
+    }
+
+    /* check for DFU update flag and kick to bootloader if set */
+    if (USBD_GS_CAN_DfuDetachRequested(&hUSB)) {
+      dfu_run_bootloader();
+    }
+
+    /* sleep 1ms to allow for idle */
+    vTaskDelay(pdMS_TO_TICKS(1));
+  }
+}
+
+/**
+  * @brief  Function implementing thread for handling messages FROM host.
+  * @param  argument: Not used
+  * @retval None
+  */
+void task_queue_from_host(void *argument)
+{
+  UNUSED(argument);
+  struct gs_host_frame_object frame_object;
 
   /* Infinite loop */
   for(;;)
   {
     /* Check the queue to see if we have data FROM the host to handle */
-    if (xQueueReceive(queue_from_hostHandle, &frame_object.frame, 0) == pdPASS){
+    if (xQueueReceive(hGS_CAN.queue_from_hostHandle, &frame_object.frame, portMAX_DELAY) == pdPASS){
 #if defined(LIN_FEATURE_ENABLED)
       if (IS_LIN_FRAME(frame_object.frame.can_id)) {
         lin_process_frame(&frame_object.frame);
@@ -220,41 +258,42 @@ void task_main(void *argument)
       if (can_send(hGS_CAN.channels[frame_object.frame.channel], &frame_object.frame)) {
         /* Echo sent frame back to host */
         frame_object.frame.reserved = 0x0;
-        xQueueSendToBack(queue_to_hostHandle, &frame_object.frame, 0);
+        xQueueSendToBack(hGS_CAN.queue_to_hostHandle, &frame_object.frame, 0);
         can_on_tx_cb(frame_object.frame.channel, &frame_object.frame);
       }
       else {
         /* throw the message back onto the queue */
-        xQueueSendToFront(queue_from_hostHandle, &frame_object.frame, 0);
+        xQueueSendToFront(hGS_CAN.queue_from_hostHandle, &frame_object.frame, 0);
+        vTaskDelay(pdMS_TO_TICKS(0));
       }
     }
+  }
+}
 
+/**
+  * @brief  Function implementing thread for handling messages TO host.
+  * @param  argument: Not used
+  * @retval None
+  */
+void task_queue_to_host(void *argument)
+{
+  UNUSED(argument);
+  struct gs_host_frame_object frame_object;
+    
+    /* Infinite loop */
+  for(;;)
+  { 
     /* Check the queue to see if we have data TO the host to handle */
-    if (xQueueReceive(queue_to_hostHandle, &frame_object.frame, 0) == pdPASS) {
+    if (xQueueReceive(hGS_CAN.queue_to_hostHandle, &frame_object.frame, portMAX_DELAY) == pdPASS) {
       if (USBD_GS_CAN_SendFrame(&hUSB, &frame_object.frame) == USBD_OK) {
         can_on_rx_cb(frame_object.frame.channel, &frame_object.frame);
       }
       else {
         /* throw the message back onto the queue */
-        xQueueSendToFront(queue_to_hostHandle, &frame_object.frame, 0);
+        xQueueSendToFront(hGS_CAN.queue_to_hostHandle, &frame_object.frame, 0);
+        vTaskDelay(pdMS_TO_TICKS(0));
       }
     }
-
-    if (uxQueueSpacesAvailable(queue_to_hostHandle) == 0  ||
-        uxQueueSpacesAvailable(queue_from_hostHandle) == 0) {
-      /* TODO: we should probably shut down CAN and start over?? */
-    }
-
-    /* check for DFU update flag and kick to bootloader if set */
-    if (USBD_GS_CAN_DfuDetachRequested(&hUSB)) {
-      dfu_run_bootloader();
-    }
-
-    /* callback function to the board to allow main task routines */
-    main_task_cb();
-
-    /* Allow other lower priority tasks to run as needed */
-    taskYIELD();
   }
 }
 
