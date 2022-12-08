@@ -43,11 +43,6 @@ THE SOFTWARE.
 #include "board.h"
 
 #if defined(LIN_FEATURE_ENABLED)
-#define LIN_SYNC_BYTE		  0x55u
-#define LIN_GET_PID_BIT(x,y) (((x) >> (y)) & 0x01u)
-#define LIN_ID_MASK			  0x3Fu
-#define LIN_RX_TIMEOUT_VALUE  3
-#define LIN_RX_MAX_DATA_BYTES 9
 
 extern USBD_GS_CAN_HandleTypeDef hGS_CAN;
 extern TIM_HandleTypeDef htim2;
@@ -121,6 +116,7 @@ void lin_transmit_master(LIN_HandleTypeDef* hlin, uint8_t pid)
 	vPortExitCritical();
 }
 
+/* NOTE: This function executes from the QueueFromHost task */
 void lin_process_frame(struct gs_host_frame* frame)
 {
 	uint32_t msg_id = frame->can_id & 0x1FFFFFFF;
@@ -213,7 +209,7 @@ void lin_rx_IRQ_handler(LIN_HandleTypeDef* hlin)
 			/* this is handled in the interrupt since data is read byte by byte */
 			hlin->lin_rx_timeout_starttick = HAL_GetTick();
 			hlin->lin_data_frame.lin_data_buffer[hlin->lin_data_frame.data_index] = rxbyte;
-			if (hlin->lin_data_frame.data_index > LIN_RX_MAX_DATA_BYTES) {
+			if (hlin->lin_data_frame.data_index > LIN_MAX_MSG_BYTES) {
 				/* we've received the max # of bytes, flag it */
 				hlin->lin_flags.lin_rx_data_available = 1;
 			}
@@ -281,7 +277,10 @@ void lin_handler_task(LIN_HandleTypeDef* hlin)
 			while (HAL_UART_Transmit_IT(hlin->huart, hlin->UartTxBuffer, data_length + 1) != HAL_OK) {
 				vTaskDelay(pdMS_TO_TICKS(0));
 			}
-
+			
+			/* TODO: Should we gate the slave frames? */
+			//lin_can_gateway_tx(hlin);
+			
 			/* Reset the LIN state machine */
 			lin_state_machine_reset(hlin);
 			break;
@@ -291,6 +290,7 @@ void lin_handler_task(LIN_HandleTypeDef* hlin)
 			break;
 
 		default:
+			/* If it has been too long since the last RX then reset the state machine */
 			if ((HAL_GetTick() - hlin->lin_rx_timeout_starttick) > LIN_RX_TIMEOUT_VALUE) {
 				lin_state_machine_reset(hlin);
 			}
