@@ -72,8 +72,9 @@ void lin_init(LIN_HandleTypeDef* hlin, uint8_t lin_instance, UART_HandleTypeDef*
 
 	/* init the LIN handles */
 	hlin->huart = huart;
-	hlin->lin_state = LIN_IDLE_AWAIT_BREAK;
 	hlin->lin_instance = lin_instance;
+
+	lin_state_machine_reset(hlin);
 
 	HAL_UART_Receive_IT(hlin->huart, hlin->UartRxBuffer, 1);
 }
@@ -95,6 +96,11 @@ void lin_transmit_master(LIN_HandleTypeDef* hlin, uint8_t pid)
 	uint8_t sync_byte = 0x55;
 	
 	HAL_LIN_SendBreak(hlin->huart);
+
+	if (hlin->lin_flags.lin_master_req_type == LIN_MASTER_REQ_BREAK_ONLY) {
+		return;
+	}
+
 	while (HAL_UART_Transmit_IT(hlin->huart, &sync_byte, 1) != HAL_OK) {
 		vTaskDelay(pdMS_TO_TICKS(0));
 	}
@@ -109,11 +115,10 @@ void lin_transmit_master(LIN_HandleTypeDef* hlin, uint8_t pid)
 		hlin->lin_state = LIN_MASTER_RX_PID;
 		hlin->lin_rx_timeout_starttick = HAL_GetTick();
 	}
-	else {
+	else if (hlin->lin_flags.lin_master_req_type == LIN_MASTER_REQ_MASTER_FRAME_TX) {
 		hlin->lin_state = LIN_SLAVE_TX_DATA;
 	}
 	vPortExitCritical();
-	
 }
 
 void lin_process_frame(struct gs_host_frame* frame)
@@ -132,18 +137,19 @@ void lin_process_frame(struct gs_host_frame* frame)
 		vPortExitCritical();
 	}
 	else if (IS_LIN_MASTER_HEADER_FRAME(msg_id)) {
+		/* header only signals a slave to respond */
+		hlin->lin_state = LIN_MASTER_TX_HEADER;
 		hlin->lin_flags.lin_master_req_type = LIN_MASTER_REQ_HEADER_ONLY;
 		hlin->lin_data_frame.pid = frame->classic_can->data[0];
-		lin_transmit_master(hlin, hlin->lin_data_frame.pid);
 	}
 	else if (IS_LIN_MASTER_FRAME(msg_id)) {
 	/* if a master frame broadcast - send message */
-		hlin->lin_flags.lin_master_req_type = LIN_MASTER_REQ_MASTER_FRAME;
+		hlin->lin_state = LIN_MASTER_TX_HEADER;
+		hlin->lin_flags.lin_master_req_type = LIN_MASTER_REQ_MASTER_FRAME_TX;
 		hlin->lin_data_frame.pid = frame->classic_can->data[0];
-		memcpy(&hlin->lin_data_frame.lin_data_buffer, &frame->classic_can->data[2], 6);
 		hlin->lin_data_frame.tx_msg_len = frame->classic_can->data[1];
-		lin_transmit_master(hlin, hlin->lin_data_frame.pid);
 		/* right now only 6 bytes as we don't have enough payload - need to switch to CANFD */
+		memcpy(&hlin->lin_data_frame.lin_data_buffer, &frame->classic_can->data[2], 6);
 	}
 	
 	/* since this came in as a frame from the host we have to echo it */
@@ -165,6 +171,7 @@ void lin_rx_IRQ_handler(LIN_HandleTypeDef* hlin)
 				hlin->lin_state = LIN_PID_RX;
 			}
 			break;
+
 		case LIN_PID_RX:
 			/* is this PID in the config table - loop to find out */
 			/* based on the table this is either a master, slave, or monitor */
@@ -193,10 +200,12 @@ void lin_rx_IRQ_handler(LIN_HandleTypeDef* hlin)
 				}
 			}
 			break;
+
 		case LIN_MASTER_RX_PID:
 			hlin->lin_data_frame.pid = rxbyte;
 			hlin->lin_state = LIN_MASTER_RX_DATA;
 			break;
+
 		case LIN_MONITOR_RX_DATA:
 		case LIN_MASTER_RX_DATA:
 			/* reset the timeout for this reception state */
@@ -211,6 +220,7 @@ void lin_rx_IRQ_handler(LIN_HandleTypeDef* hlin)
 				hlin->lin_data_frame.data_index++;
 			}
 			break;
+
 		default:
 			break;
 	}
@@ -222,6 +232,10 @@ void lin_handler_task(LIN_HandleTypeDef* hlin)
 	uint8_t checksum;
 
 	switch (hlin->lin_state) {
+		case LIN_MASTER_TX_HEADER:
+			lin_transmit_master(hlin, hlin->lin_data_frame.pid);
+			break;
+
 		case LIN_MONITOR_RX_DATA:
 		case LIN_MASTER_RX_DATA:
 			if (((HAL_GetTick() - hlin->lin_rx_timeout_starttick) > LIN_RX_TIMEOUT_VALUE)
@@ -266,6 +280,10 @@ void lin_handler_task(LIN_HandleTypeDef* hlin)
 
 			/* Reset the LIN state machine */
 			lin_state_machine_reset(hlin);
+			break;
+		
+		case LIN_IDLE_AWAIT_BREAK:
+			/* We are already in the pending state, no need to reset the state machine */
 			break;
 
 		default:
