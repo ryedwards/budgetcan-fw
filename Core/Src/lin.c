@@ -46,8 +46,6 @@ THE SOFTWARE.
 #define LIN_SYNC_BYTE		  0x55u
 #define LIN_GET_PID_BIT(x,y) (((x) >> (y)) & 0x01u)
 #define LIN_ID_MASK			  0x3Fu
-#define LIN_P0_FLAG			  6
-#define LIN_P1_FLAG			  7
 #define LIN_RX_TIMEOUT_VALUE  3
 #define LIN_RX_MAX_DATA_BYTES 9
 
@@ -58,6 +56,7 @@ extern TIM_HandleTypeDef htim2;
 extern CAN_HANDLE_TYPEDEF LIN_GATEWAY_CAN_CH;
 #endif
 
+static void lin_state_machine_reset(LIN_HandleTypeDef* hlin);
 static FlagStatus lin_hw_check_for_break(LIN_HandleTypeDef* hlin);
 static uint8_t lin_data_layer_checksum(uint8_t pid, uint8_t length, const uint8_t* data_ptr);
 static void lin_erase_slot_table(LIN_HandleTypeDef* hlin);
@@ -65,17 +64,30 @@ static void lin_disable_all_slots(LIN_HandleTypeDef* hlin);
 static void lin_can_gateway_tx(LIN_HandleTypeDef* hlin);
 static uint8_t lin_config(LIN_HandleTypeDef* hlin, uint32_t msg_id, uint8_t *data);
 
+
 void lin_init(LIN_HandleTypeDef* hlin, uint8_t lin_instance, UART_HandleTypeDef* huart)
 {
 	/* erase the slot table to ensure no random data */
 	lin_erase_slot_table(hlin);
 
-	HAL_UART_Receive_IT(huart, hlin->UartRxBuffer, 1);
-
 	/* init the LIN handles */
 	hlin->huart = huart;
 	hlin->lin_state = LIN_IDLE_AWAIT_BREAK;
 	hlin->lin_instance = lin_instance;
+
+	HAL_UART_Receive_IT(hlin->huart, hlin->UartRxBuffer, 1);
+}
+
+static void lin_state_machine_reset(LIN_HandleTypeDef* hlin) 
+{
+	/* Reset the LIN state machine */
+	vPortEnterCritical();
+	hlin->lin_data_frame.pid = 0;
+	memset(hlin->lin_data_frame.lin_data_buffer, 0x00, sizeof(hlin->lin_data_frame.lin_data_buffer));
+	hlin->lin_flags.lin_rx_data_available = 0;
+	hlin->lin_data_frame.data_index = 0;
+	hlin->lin_state = LIN_IDLE_AWAIT_BREAK;
+	vPortExitCritical();
 }
 
 void lin_transmit_master(LIN_HandleTypeDef* hlin, uint8_t pid)
@@ -90,15 +102,17 @@ void lin_transmit_master(LIN_HandleTypeDef* hlin, uint8_t pid)
 		vTaskDelay(pdMS_TO_TICKS(0));
 	}
 	
+	vPortEnterCritical();
 	hlin->lin_data_frame.pid = pid;
 	hlin->lin_data_frame.data_index = 0;
-	if (hlin->lin_flags.lin_master_req_type == 1) {
+	if (hlin->lin_flags.lin_master_req_type == LIN_MASTER_REQ_HEADER_ONLY) {
 		hlin->lin_state = LIN_MASTER_RX_PID;
-		hlin->lin_rx_timeout = HAL_GetTick() + LIN_RX_TIMEOUT_VALUE;
+		hlin->lin_rx_timeout_starttick = HAL_GetTick();
 	}
 	else {
 		hlin->lin_state = LIN_SLAVE_TX_DATA;
 	}
+	vPortExitCritical();
 	
 }
 
@@ -113,22 +127,26 @@ void lin_process_frame(struct gs_host_frame* frame)
 	}
 	/* if a config frame process the config */
 	if (IS_LIN_CONFIG_FRAME(msg_id)) {
+		vPortEnterCritical();
 		lin_config(hlin, msg_id, frame->classic_can->data);
+		vPortExitCritical();
 	}
 	else if (IS_LIN_MASTER_HEADER_FRAME(msg_id)) {
-		hlin->lin_flags.lin_master_req_type = 1;
+		hlin->lin_flags.lin_master_req_type = LIN_MASTER_REQ_HEADER_ONLY;
 		hlin->lin_data_frame.pid = frame->classic_can->data[0];
 		lin_transmit_master(hlin, hlin->lin_data_frame.pid);
 	}
 	else if (IS_LIN_MASTER_FRAME(msg_id)) {
 	/* if a master frame broadcast - send message */
-		hlin->lin_flags.lin_master_req_type = 0;
+		hlin->lin_flags.lin_master_req_type = LIN_MASTER_REQ_MASTER_FRAME;
 		hlin->lin_data_frame.pid = frame->classic_can->data[0];
 		memcpy(&hlin->lin_data_frame.lin_data_buffer, &frame->classic_can->data[2], 6);
 		hlin->lin_data_frame.tx_msg_len = frame->classic_can->data[1];
 		lin_transmit_master(hlin, hlin->lin_data_frame.pid);
 		/* right now only 6 bytes as we don't have enough payload - need to switch to CANFD */
 	}
+	
+	/* since this came in as a frame from the host we have to echo it */
 	frame->flags = 0x0;
 	frame->reserved = 0x0;
 	xQueueSendToFront(hGS_CAN.queue_to_hostHandle, frame, 0);
@@ -150,7 +168,7 @@ void lin_rx_IRQ_handler(LIN_HandleTypeDef* hlin)
 		case LIN_PID_RX:
 			/* is this PID in the config table - loop to find out */
 			/* based on the table this is either a master, slave, or monitor */
-			hlin->lin_rx_timeout = HAL_GetTick() + LIN_RX_TIMEOUT_VALUE;
+			hlin->lin_rx_timeout_starttick = HAL_GetTick();
 			hlin->lin_data_frame.pid = rxbyte;
 			for (uint8_t lin_slot_index = 0; lin_slot_index < LIN_MAX_SLOTS; lin_slot_index++) {
 				if ((hlin->lin_data_frame.pid & LIN_ID_MASK) == hlin->lin_slot_table[lin_slot_index].PID  &&
@@ -183,7 +201,7 @@ void lin_rx_IRQ_handler(LIN_HandleTypeDef* hlin)
 		case LIN_MASTER_RX_DATA:
 			/* reset the timeout for this reception state */
 			/* this is handled in the interrupt since data is read byte by byte */
-			hlin->lin_rx_timeout = HAL_GetTick() + LIN_RX_TIMEOUT_VALUE;
+			hlin->lin_rx_timeout_starttick = HAL_GetTick();
 			hlin->lin_data_frame.lin_data_buffer[hlin->lin_data_frame.data_index] = rxbyte;
 			if (hlin->lin_data_frame.data_index > LIN_RX_MAX_DATA_BYTES) {
 				/* we've received the max # of bytes, flag it */
@@ -200,11 +218,14 @@ void lin_rx_IRQ_handler(LIN_HandleTypeDef* hlin)
 
 void lin_handler_task(LIN_HandleTypeDef* hlin)
 {
+	uint8_t data_length;
+	uint8_t checksum;
+
 	switch (hlin->lin_state) {
 		case LIN_MONITOR_RX_DATA:
 		case LIN_MASTER_RX_DATA:
-			if ((HAL_GetTick() >= hlin->lin_rx_timeout 
-					|| hlin->lin_flags.lin_rx_data_available)) {
+			if (((HAL_GetTick() - hlin->lin_rx_timeout_starttick) > LIN_RX_TIMEOUT_VALUE)
+					|| (hlin->lin_flags.lin_rx_data_available)) {
 				/* either the max number of bytes were received or the state machine timed out waiting for more data */
 				hlin->lin_data_frame.data_index--; /* subtract the checksum from the data length */
 				hlin->lin_data_frame.checksum = hlin->lin_data_frame.lin_data_buffer[hlin->lin_data_frame.data_index];
@@ -220,11 +241,7 @@ void lin_handler_task(LIN_HandleTypeDef* hlin)
 				}
 
 				/* Reset the LIN state machine */
-				hlin->lin_data_frame.pid = 0;
-				memset(hlin->lin_data_frame.lin_data_buffer, 0x00, sizeof(hlin->lin_data_frame.lin_data_buffer));
-				hlin->lin_flags.lin_rx_data_available = 0;
-				hlin->lin_data_frame.data_index = 0;
-				hlin->lin_state = LIN_IDLE_AWAIT_BREAK;
+				lin_state_machine_reset(hlin);
 			}
 			break;
 			
@@ -232,11 +249,10 @@ void lin_handler_task(LIN_HandleTypeDef* hlin)
 			/* we have RX'd a PID that we now need to respond to */
 			/* need the table index that we used to trigger the PID */
 			/* create a copy of the data length for readability */
-			//data_length = hlin->lin_slot_table[hlin->lin_slot_table_index].len;
-			uint8_t data_length = hlin->lin_data_frame.tx_msg_len;
+			data_length = hlin->lin_data_frame.tx_msg_len;
 
 			/* calculate the checksum */
-			uint8_t checksum = lin_data_layer_checksum(hlin->lin_data_frame.pid,
+			checksum = lin_data_layer_checksum(hlin->lin_data_frame.pid,
 												data_length,
 												hlin->lin_data_frame.lin_data_buffer);
 
@@ -249,13 +265,15 @@ void lin_handler_task(LIN_HandleTypeDef* hlin)
 			}
 
 			/* Reset the LIN state machine */
-			hlin->lin_flags.lin_rx_data_available = 0;
-			hlin->lin_data_frame.data_index = 0;
-			hlin->lin_state = LIN_IDLE_AWAIT_BREAK;
-		default:
+			lin_state_machine_reset(hlin);
 			break;
-	}
-		
+
+		default:
+			if ((HAL_GetTick() - hlin->lin_rx_timeout_starttick) > LIN_RX_TIMEOUT_VALUE) {
+				lin_state_machine_reset(hlin);
+			}
+			break;
+	}		
 }
 
 static uint8_t lin_config(LIN_HandleTypeDef* hlin, uint32_t msg_id, uint8_t *data)

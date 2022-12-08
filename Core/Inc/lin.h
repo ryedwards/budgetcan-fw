@@ -79,6 +79,12 @@ typedef enum {
 } lin_type_t;
 
 typedef enum {
+	LIN_MASTER_REQ_BREAK_ONLY,
+	LIN_MASTER_REQ_HEADER_ONLY,
+	LIN_MASTER_REQ_MASTER_FRAME
+} lin_master_req_type_t;
+
+typedef enum {
 	LIN_IDLE_AWAIT_BREAK,
 	LIN_PID_RX,
 	LIN_MASTER_RX_PID,
@@ -114,7 +120,7 @@ typedef union
 typedef struct
 {
 	uint8_t lin_rx_data_available    : 1;
-	uint8_t lin_master_req_type;
+	lin_master_req_type_t lin_master_req_type;
 } lin_flags_t;
 
 typedef struct
@@ -158,7 +164,7 @@ typedef struct {
 	lin_state_t lin_state;
 	lin_type_t lin_type;
 	lin_data_frame_t lin_data_frame;
-	uint32_t lin_rx_timeout;
+	uint32_t lin_rx_timeout_starttick;
 	uint8_t lin_classicChecksum;
 	uint32_t lin_baud_rate;
 	lin_config_t lin_config_data;
