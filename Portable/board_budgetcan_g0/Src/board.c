@@ -33,8 +33,8 @@ THE SOFTWARE.
 #include "lin.h"
 #include "led.h"
 
-#define TASK_LIN_STACK_SIZE		(512 / sizeof(portSTACK_TYPE))
-#define TASK_LIN_STACK_PRIORITY (tskIDLE_PRIORITY + 1)
+#define TASK_LIN_STACK_SIZE		(configMINIMAL_STACK_SIZE)
+#define TASK_LIN_STACK_PRIORITY (tskIDLE_PRIORITY + 3)
 
 LED_HandleTypeDef hled1;
 LED_HandleTypeDef hled2;
@@ -197,10 +197,20 @@ void MX_USART1_UART_Init(void)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 	if (huart->Instance == USART1) {
-		lin_handle_uart_rx_IRQ(&hlin1);
+		//TODO: Set this up for multichannel LIN
+		lin_rx_IRQ_handler(&hlin1);
 		//set up for next RX for USART1
-		HAL_UART_Receive_IT(&huart1, hlin1.UartRxBuffer, 1);
+		HAL_UART_Receive_IT(hlin1.huart, hlin1.UartRxBuffer, 1);
 	}
+}
+
+/** @brief UART TX IRQ for this board
+ *  @param None
+ *  @retval None
+ */
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+	UNUSED(huart);
 }
 
 /** @brief Function to run the LIN task
@@ -214,8 +224,17 @@ static void task_lin(void *argument)
 	for (;;) {
 		/* LIN transmits in blocking mode so put into this task */
 		lin_handler_task(&hlin1);
+		vTaskDelay(pdMS_TO_TICKS(0));
+	}
+}
 
-		taskYIELD();
+LIN_HandleTypeDef* lin_get_handle(uint32_t msg_id)
+{
+	if ((msg_id & 0x1FFFFE80) == 0x1FFFFE80) {
+			return &hlin1;
+		}
+	else {
+		return NULL;
 	}
 }
 
@@ -241,10 +260,10 @@ void main_init_cb(void)
 
 	/* init specific to LIN */
 	MX_USART1_UART_Init();
-	lin_init(&hlin1, LIN1_CHANNEL, &huart1);
-	HAL_GPIO_WritePin(LIN1_NSLP_GPIO_Port, LIN1_NSLP_Pin, GPIO_PIN_SET);
 	xTaskCreate(task_lin, "LIN Task", TASK_LIN_STACK_SIZE, NULL,
 				TASK_LIN_STACK_PRIORITY, &xCreatedLINTask);
+	lin_init(&hlin1, LIN1_CHANNEL, &huart1);
+	HAL_GPIO_WritePin(LIN1_NSLP_GPIO_Port, LIN1_NSLP_Pin, GPIO_PIN_SET);
 }
 
 void main_task_cb(void)
