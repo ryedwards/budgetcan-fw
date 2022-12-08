@@ -43,6 +43,12 @@ extern "C" {
 
 #if defined(LIN_FEATURE_ENABLED)
 /* Exported defines -----------------------------------------------------------*/
+#define LIN_SYNC_BYTE		  	0x55u
+#define LIN_GET_PID_BIT(x,y) 	(((x) >> (y)) & 0x01u)
+#define LIN_ID_MASK			  	0x3Fu
+#define LIN_RX_TIMEOUT_VALUE  	3
+#define LIN_MAX_MSG_BYTES 		9
+
 #if !defined(LIN_MAX_DATA_BYTES)
 #define LIN_MAX_DATA_BYTES 8U
 #endif
@@ -162,6 +168,7 @@ typedef struct {
 	UART_HandleTypeDef* huart;
 	lin_flags_t lin_flags;
 	uint8_t UartRxBuffer[1];
+	uint8_t UartTxBuffer[LIN_MAX_MSG_BYTES];
 	lin_state_t lin_state;
 	lin_type_t lin_type;
 	lin_data_frame_t lin_data_frame;

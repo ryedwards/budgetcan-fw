@@ -168,6 +168,7 @@ void lin_rx_IRQ_handler(LIN_HandleTypeDef* hlin)
 			hlin->lin_data_frame.data_index = 0;
 			/* if flag is set to wait for sync and we get sync set flag to get ID */
 			if (lin_hw_check_for_break(hlin) == SET  && rxbyte == LIN_SYNC_BYTE) {
+				hlin->lin_rx_timeout_starttick = HAL_GetTick();
 				hlin->lin_state = LIN_PID_RX;
 			}
 			break;
@@ -230,6 +231,7 @@ void lin_handler_task(LIN_HandleTypeDef* hlin)
 {
 	uint8_t data_length;
 	uint8_t checksum;
+	uint8_t pid;
 
 	switch (hlin->lin_state) {
 		case LIN_MASTER_TX_HEADER:
@@ -264,17 +266,19 @@ void lin_handler_task(LIN_HandleTypeDef* hlin)
 			/* need the table index that we used to trigger the PID */
 			/* create a copy of the data length for readability */
 			data_length = hlin->lin_data_frame.tx_msg_len;
+			pid = hlin->lin_data_frame.pid;
+			memcpy(hlin->UartTxBuffer, hlin->lin_data_frame.lin_data_buffer, data_length);
 
 			/* calculate the checksum */
-			checksum = lin_data_layer_checksum(hlin->lin_data_frame.pid,
+			checksum = lin_data_layer_checksum(pid,
 												data_length,
-												hlin->lin_data_frame.lin_data_buffer);
+												hlin->UartTxBuffer);
 
 			/* add the checksum to the end of the buffer */
-			hlin->lin_data_frame.lin_data_buffer[data_length] = checksum;
+			hlin->UartTxBuffer[data_length] = checksum;
 
 			/* TX the data over the UART -- THIS IS BLOCKING */
-			while (HAL_UART_Transmit_IT(hlin->huart, hlin->lin_data_frame.lin_data_buffer, data_length + 1) != HAL_OK) {
+			while (HAL_UART_Transmit_IT(hlin->huart, hlin->UartTxBuffer, data_length + 1) != HAL_OK) {
 				vTaskDelay(pdMS_TO_TICKS(0));
 			}
 
