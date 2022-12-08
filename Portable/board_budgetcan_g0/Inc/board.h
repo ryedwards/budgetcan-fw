@@ -46,6 +46,8 @@ extern "C" {
 #define USBD_INTERFACE_STRING	  (uint8_t*) "gs_usb interface"
 #define DFU_INTERFACE_STRING	  (uint8_t*) "budgetcan_g0 DFU interface"
 
+//#define BUDGETCAN_USE_HSE
+
 /* FDCAN init values for this board */
 #define FDCAN_SJW_INIT				 1
 #define FDCAN_BRP_INIT				 8
