@@ -93,6 +93,7 @@ bool USBD_GS_CAN_CustomDeviceRequest(USBD_HandleTypeDef *pdev, USBD_SetupReqType
 bool USBD_GS_CAN_CustomInterfaceRequest(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
 bool USBD_GS_CAN_DfuDetachRequested(USBD_HandleTypeDef *pdev);
 uint8_t USBD_GS_CAN_SendFrame(USBD_HandleTypeDef *pdev, struct gs_host_frame *frame);
+uint8_t USBD_GS_CAN_PrepareReceive(USBD_HandleTypeDef *pdev);
 
 #ifdef __cplusplus
 }
