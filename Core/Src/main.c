@@ -214,15 +214,10 @@ void task_main(void *argument)
 {
   UNUSED(argument);
 
-      /* Infinite loop */
+  /* Infinite loop */
   for(;;)
   {
     main_task_cb();
-
-    if (uxQueueSpacesAvailable(hGS_CAN.queue_to_hostHandle) == 0  ||
-        uxQueueSpacesAvailable(hGS_CAN.queue_from_hostHandle) == 0) {
-      /* TODO: we should probably shut down CAN and start over?? */
-    }
 
     /* check for DFU update flag and kick to bootloader if set */
     if (USBD_GS_CAN_DfuDetachRequested(&hUSB)) {
@@ -263,8 +258,14 @@ void task_queue_from_host(void *argument)
       }
       else {
         /* throw the message back onto the queue */
-        xQueueSendToFront(hGS_CAN.queue_from_hostHandle, &frame_object.frame, 0);
-        vTaskDelay(pdMS_TO_TICKS(0));
+        if (uxQueueSpacesAvailable(hGS_CAN.queue_from_hostHandle) == 0) {
+          /* the pipe to the host is full - delay longer to allow for catchup if needed */
+          vTaskDelay(pdMS_TO_TICKS(10));
+        }
+        else {
+          xQueueSendToFront(hGS_CAN.queue_from_hostHandle, &frame_object.frame, 0);
+          vTaskDelay(pdMS_TO_TICKS(0));
+        }
       }
     }
   }
@@ -290,8 +291,14 @@ void task_queue_to_host(void *argument)
       }
       else {
         /* throw the message back onto the queue */
-        xQueueSendToFront(hGS_CAN.queue_to_hostHandle, &frame_object.frame, 0);
-        vTaskDelay(pdMS_TO_TICKS(0));
+        if (uxQueueSpacesAvailable(hGS_CAN.queue_to_hostHandle) == 0) {
+          /* the pipe to the host is full - delay longer to allow for catchup if needed */
+          vTaskDelay(pdMS_TO_TICKS(10));
+        }
+        else {
+          xQueueSendToFront(hGS_CAN.queue_to_hostHandle, &frame_object.frame, 0);
+          vTaskDelay(pdMS_TO_TICKS(0));
+        }
       }
     }
   }
