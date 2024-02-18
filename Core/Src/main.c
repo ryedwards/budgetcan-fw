@@ -141,7 +141,9 @@ int main(void)
               TASK_Q_FROM_HOST_STACK_PRIORITY, &xCreatedQfromHostTask);
 
   /* Init the RTOS streams and queues */
-  hGS_CAN.queue_from_hostHandle = xQueueCreate(QUEUE_SIZE_HOST_TO_DEV, GS_HOST_FRAME_SIZE);
+  for(uint8_t i=0; i<CAN_NUM_CHANNELS; i++) {
+    hGS_CAN.queue_from_hostHandle[i] = xQueueCreate(QUEUE_SIZE_HOST_TO_DEV, GS_HOST_FRAME_SIZE);
+  }
   hGS_CAN.queue_to_hostHandle = xQueueCreate(QUEUE_SIZE_DEV_TO_HOST, GS_HOST_FRAME_SIZE);
 
   /* Start scheduler */
@@ -238,12 +240,20 @@ void task_queue_from_host(void *argument)
 {
   UNUSED(argument);
   struct gs_host_frame_object frame_object;
+  bool new_frame;
 
   /* Infinite loop */
   for(;;)
   {
+    new_frame = false;
     /* Check the queue to see if we have data FROM the host to handle */
-    if (xQueueReceive(hGS_CAN.queue_from_hostHandle, &frame_object.frame, portMAX_DELAY) == pdPASS){
+    for(uint8_t i=0; i<CAN_NUM_CHANNELS; i++) {
+      if (xQueueReceive(hGS_CAN.queue_from_hostHandle[i], &frame_object.frame, 0) == pdPASS){
+        new_frame = true;
+      }
+    }
+    
+    if(new_frame) {
 #if defined(LIN_FEATURE_ENABLED)
       if (IS_LIN_FRAME(frame_object.frame.can_id)) {
         lin_process_frame(&frame_object.frame);
@@ -257,19 +267,14 @@ void task_queue_from_host(void *argument)
         can_on_tx_cb(frame_object.frame.channel, &frame_object.frame);
       }
       else {
-        /* throw the message back onto the queue */
-        if (uxQueueSpacesAvailable(hGS_CAN.queue_from_hostHandle) == 0) {
-          /* the pipe to the host is full - delay longer to allow for catchup if needed */
-          vTaskDelay(pdMS_TO_TICKS(10));
-        }
-        else {
-          xQueueSendToFront(hGS_CAN.queue_from_hostHandle, &frame_object.frame, 0);
-          vTaskDelay(pdMS_TO_TICKS(0));
-        }
-      }
+          xQueueSendToFront(hGS_CAN.queue_from_hostHandle[frame_object.frame.channel], &frame_object.frame, 0);
+      } 
     }
+    vTaskDelay(pdMS_TO_TICKS(0));
   }
+    
 }
+
 
 /**
   * @brief  Function implementing thread for handling messages TO host.

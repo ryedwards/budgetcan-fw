@@ -78,7 +78,7 @@ typedef struct {
 	USBD_SetupReqTypedef last_setup_request;
 	struct gs_host_frame_object from_host_frame;
 	CAN_HANDLE_TYPEDEF *channels[CAN_NUM_CHANNELS];
-	QueueHandle_t queue_from_hostHandle;
+	QueueHandle_t queue_from_hostHandle[CAN_NUM_CHANNELS];
 	QueueHandle_t queue_to_hostHandle;
 	bool dfu_detach_requested;
 	bool pad_pkts_to_max_pkt_size;
