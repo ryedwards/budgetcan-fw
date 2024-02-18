@@ -539,10 +539,11 @@ static uint8_t USBD_GS_CAN_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
 
 	uint32_t rxlen = USBD_LL_GetRxDataSize(pdev, epnum);
 #if defined(CANFD_FEATURE_ENABLED)
-	if (rxlen < (GS_HOST_CLASSIC_FRAME_SIZE)-4) {
+	if (rxlen < (GS_HOST_CLASSIC_FRAME_SIZE)-4)
 #else
-	if (rxlen < (GS_HOST_FRAME_SIZE)-4) {
+	if (rxlen < (GS_HOST_FRAME_SIZE)-4)
 #endif
+	{
 		// Invalid frame length, just ignore it and receive into the same buffer
 		// again next time.
 		USBD_GS_CAN_PrepareReceive(pdev);
@@ -550,7 +551,7 @@ static uint8_t USBD_GS_CAN_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
 	}
 
 	// Enqueue the frame we just received.
-	xQueueSendToBackFromISR(hGS_CAN.queue_from_hostHandle, &hcan->from_host_frame, NULL);
+	xQueueSendToBackFromISR(hGS_CAN.queue_from_hostHandle[hcan->from_host_frame.frame.channel], &hcan->from_host_frame, NULL);
 	USBD_GS_CAN_PrepareReceive(pdev);
 	return USBD_OK;
 }
