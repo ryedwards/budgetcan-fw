@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "cstdint": "c",
+        "USBD_DEF.H": "cpp"
+    }
+}

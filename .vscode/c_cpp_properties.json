@@ -1,0 +1,161 @@
+{
+    "configurations": [
+        {
+            "name": "board_budgetcan_g0",
+            "includePath": [
+                "${workspaceFolder}/Portable/board_budgetcan_g0/Inc",
+                "${workspaceFolder}/Core/Inc",
+                "${workspaceFolder}/Drivers/stm32g0xx_hal_driver/Inc",
+                "${workspaceFolder}/Drivers/stm32g0xx_hal_driver/Inc",
+                "${workspaceFolder}/Drivers/stm32g0xx_hal_driver/Inc/Legacy",
+                "${workspaceFolder}/Drivers/cmsis_device_g0/Include",
+                "${workspaceFolder}/Drivers/CMSIS/include",
+                "${workspaceFolder}/Middlewares/ST/STM32_USB_Device_Library/Core/Inc",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/include",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/portable/GCC/ARM_CM0",
+                "${env:ARMGCC}/**"
+            ],
+            "defines": [
+                "STM32G0B1xx",
+                "USE_HAL_DRIVER"
+            ],
+            "compilerPath": "${env:ARMGCC}/arm-none-eabi-gcc.exe",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "clang-arm64",
+            "configurationProvider": "ms-vscode.makefile-tools",
+            "compilerArgs": [
+                "-Wall",
+                "-Wextra ",
+                "-Wstrict-prototypes"
+            ]
+        },
+        {
+            "name": "board_DevEBoxH7",
+            "includePath": [
+                "${workspaceFolder}/Portable/board_DevEBoxH7/Inc",
+                "${workspaceFolder}/Core/Inc",
+                "${workspaceFolder}/Drivers/stm32h7xx_hal_driver/Inc",
+                "${workspaceFolder}/Drivers/stm32h7xx_hal_driver/Inc",
+                "${workspaceFolder}/Drivers/stm32h7xx_hal_driver/Inc/Legacy",
+                "${workspaceFolder}/Drivers/cmsis_device_h7/Include",
+                "${workspaceFolder}/Drivers/CMSIS/Include",
+                "${workspaceFolder}/Middlewares/ST/STM32_USB_Device_Library/Core/Inc",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/include",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/portable/GCC/ARM_CM4F",
+                "${env:ARMGCC}/**"
+            ],
+            "defines": [
+                "STM32H743xx",
+                "USE_HAL_DRIVER"
+            ],
+            "compilerPath": "${env:ARMGCC}/arm-none-eabi-gcc.exe",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "clang-arm64",
+            "configurationProvider": "ms-vscode.makefile-tools"
+        },
+        {
+            "name": "board_canablev1",
+            "includePath": [
+                "${workspaceFolder}/Portable/board_canablev1/Inc",
+                "${workspaceFolder}/Core/Inc",
+                "${workspaceFolder}/Drivers/stm32f0xx_hal_driver/Inc",
+                "${workspaceFolder}/Drivers/stm32f0xx_hal_driver/Inc",
+                "${workspaceFolder}/Drivers/stm32f0xx_hal_driver/Inc/Legacy",
+                "${workspaceFolder}/Drivers/cmsis_device_f0/Include",
+                "${workspaceFolder}/Drivers/CMSIS/Include",
+                "${workspaceFolder}/Middlewares/ST/STM32_USB_Device_Library/Core/Inc",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/include",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/portable/GCC/ARM_CM0",
+                "${env:ARMGCC}/**"
+            ],
+            "defines": [
+                "STM32F042x6",
+                "USE_HAL_DRIVER"
+            ],
+            "compilerPath": "${env:ARMGCC}/arm-none-eabi-gcc.exe",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "clang-arm64",
+            "configurationProvider": "ms-vscode.makefile-tools"
+        },
+        {
+            "name": "board_cannette",
+            "includePath": [
+                "${workspaceFolder}/Portable/board_cannette/Inc",
+                "${workspaceFolder}/Core/Inc",
+                "${workspaceFolder}/Drivers/stm32f0xx_hal_driver/Inc",
+                "${workspaceFolder}/Drivers/stm32f0xx_hal_driver/Inc",
+                "${workspaceFolder}/Drivers/stm32f0xx_hal_driver/Inc/Legacy",
+                "${workspaceFolder}/Drivers/cmsis_device_f0/Include",
+                "${workspaceFolder}/Drivers/CMSIS/Include",
+                "${workspaceFolder}/Middlewares/ST/STM32_USB_Device_Library/Core/Inc",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/include",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/portable/GCC/ARM_CM0",
+                "${env:ARMGCC}/**"
+            ],
+            "defines": [
+                "STM32F042x6",
+                "USE_HAL_DRIVER"
+            ],
+            "compilerPath": "${env:ARMGCC}/arm-none-eabi-gcc.exe",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "clang-arm64",
+            "configurationProvider": "ms-vscode.makefile-tools"
+        },
+        {
+            "name": "board_canablev2",
+            "includePath": [
+                "${workspaceFolder}/Portable/board_canablev2/Inc",
+                "${workspaceFolder}/Core/Inc",
+                "${workspaceFolder}/Drivers/stm32g4xx_hal_driver/Inc",
+                "${workspaceFolder}/Drivers/stm32g4xx_hal_driver/Inc",
+                "${workspaceFolder}/Drivers/stm32g4xx_hal_driver/Inc/Legacy",
+                "${workspaceFolder}/Drivers/cmsis_device_g4/Include",
+                "${workspaceFolder}/Drivers/CMSIS/Include",
+                "${workspaceFolder}/Middlewares/ST/STM32_USB_Device_Library/Core/Inc",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/include",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/portable/GCC/ARM_CM4F",
+                "${env:ARMGCC}/**"
+            ],
+            "defines": [
+                "STM32G431xx",
+                "USE_HAL_DRIVER"
+            ],
+            "compilerPath": "${env:ARMGCC}/arm-none-eabi-gcc.exe",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "clang-arm64",
+            "configurationProvider": "ms-vscode.makefile-tools"
+        },
+        {
+            "name": "board_candlelight",
+            "includePath": [
+                "${workspaceFolder}/Portable/board_candlelight/Inc",
+                "${workspaceFolder}/Core/Inc",
+                "${workspaceFolder}/Drivers/stm32f0xx_hal_driver/Inc",
+                "${workspaceFolder}/Drivers/stm32f0xx_hal_driver/Inc",
+                "${workspaceFolder}/Drivers/stm32f0xx_hal_driver/Inc/Legacy",
+                "${workspaceFolder}/Drivers/cmsis_device_f0/Include",
+                "${workspaceFolder}/Drivers/CMSIS/Include",
+                "${workspaceFolder}/Middlewares/ST/STM32_USB_Device_Library/Core/Inc",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/include",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/portable/GCC/ARM_CM0",
+                "${env:ARMGCC}/**"
+            ],
+            "defines": [
+                "STM32F072xB",
+                "USE_HAL_DRIVER"
+            ],
+            "compilerPath": "${env:ARMGCC}/arm-none-eabi-gcc.exe",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "clang-arm64",
+            "configurationProvider": "ms-vscode.makefile-tools"
+        }
+        
+    ],
+    "version": 4
+}
