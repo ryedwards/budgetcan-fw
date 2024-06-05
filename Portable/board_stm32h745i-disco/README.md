@@ -29,7 +29,10 @@ Some examples of sending data are below:
 
 - `cansend can0 213##311223344`
 - `canplayer -I candump.log`
-- `cangen can0 -f -b -g 5`
+- `cangen can0 -f -b -g 5` or `cangen can0 -c 10 -g 1`
+
+To analyze the bus load we can use `canbusload can0@1000000 can1@1000000 -r -t -b -c` which will each second will compute statistics per interface.
+This however works only with standard CAN 2.0 and the CAN FD is not supported.
 
 To display sent data use `candump can0` (it can contain more than one interface so we can use `candump can0 can1` and track the traffic of two interfaces).
 
