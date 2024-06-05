@@ -310,6 +310,7 @@ void task_queue_to_host(void *argument)
 void __initialize_hardware_early(void)
 {
   if (dfu_reset_to_bootloader_magic == RESET_TO_BOOTLOADER_MAGIC_CODE) {
+    dfu_reset_to_bootloader_magic = 0;
     typedef void (*pFunction)(void);
     uint32_t JumpAddress = *(__IO uint32_t*) (BOARD_SYSMEM_RESET_VECTOR + 4);
     pFunction Jump_To_Boot = (pFunction) JumpAddress;
