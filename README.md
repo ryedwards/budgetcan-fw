@@ -52,6 +52,7 @@ I have included a few examples to be used as templates.
 11. Edit the Makefile in your board's root directory to update the names of the startup and linker files you copied over.  If your chipset doesn't match the template then you will need to update the chipset family ID on source and include files.
 12. Compile and fix stuff you didn't update correctly.
 
+**NOTE:** in file `board.h` symbol `BOARD_SYSMEM_RESET_VECTOR` shall be configured to start of the bootloader in system memory. This value can be found in [AN2606](https://www.st.com/resource/en/application_note/an2606-stm32-microcontroller-system-memory-boot-mode-stmicroelectronics.pdf) per each MCU. For example STM32H74x is the value **0x1FF09800**.
 
 <br>
 <br>
