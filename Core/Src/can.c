@@ -487,8 +487,15 @@ void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan)
 #elif defined(FDCAN1)
 void HAL_FDCAN_ErrorStatusCallback(CAN_HANDLE_TYPEDEF *hcan, uint32_t ErrorStatusITs)
 {
-	UNUSED(ErrorStatusITs);
+	FDCAN_ProtocolStatusTypeDef protocolStatus = {};
 	struct gs_host_frame_object frame_object;
+	/* special check for bus off recovery */
+    if ((ErrorStatusITs & FDCAN_IT_BUS_OFF) != RESET) {
+    	HAL_FDCAN_GetProtocolStatus(hcan, &protocolStatus);
+    	if (protocolStatus.BusOff) {
+        	CLEAR_BIT(hcan->Instance->CCCR, FDCAN_CCCR_INIT);
+		}
+    }
 	uint32_t can_err_status = hcan->Instance->PSR;
 	can_parse_error_status(can_err_status, can_last_err_status, hcan, &frame_object.frame);
 	/* put this CAN message into the queue to send to host */
