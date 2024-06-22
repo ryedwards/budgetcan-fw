@@ -492,7 +492,7 @@ void HAL_FDCAN_ErrorStatusCallback(CAN_HANDLE_TYPEDEF *hcan, uint32_t ErrorStatu
 	uint32_t can_err_status = hcan->Instance->PSR;
 	can_parse_error_status(can_err_status, can_last_err_status, hcan, &frame_object.frame);
 	/* put this CAN message into the queue to send to host */
-	xQueueSendToBackFromISR(hGS_CAN.queue_to_hostHandle, &frame_object.frame, NULL);
+	xQueueSendToFrontFromISR(hGS_CAN.queue_to_hostHandle, &frame_object.frame, NULL);
 	can_last_err_status = can_err_status;
 }
 #endif
@@ -521,6 +521,7 @@ bool can_parse_error_status(uint32_t err, uint32_t last_err, CAN_HANDLE_TYPEDEF 
 	frame->echo_id = 0xFFFFFFFF;
 	frame->can_id  = CAN_ERR_FLAG;
 	frame->can_dlc = CAN_ERR_DLC;
+	frame->channel = USBD_GS_CAN_GetChannelNumber(&hUSB, hcan);
 	frame->classic_can->data[0] = CAN_ERR_LOSTARB_UNSPEC;
 	frame->classic_can->data[1] = CAN_ERR_CRTL_UNSPEC;
 	frame->classic_can->data[2] = CAN_ERR_PROT_UNSPEC;
