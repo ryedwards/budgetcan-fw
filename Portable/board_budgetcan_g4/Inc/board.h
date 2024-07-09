@@ -84,32 +84,32 @@ extern "C" {
 #define QUEUE_SIZE_HOST_TO_DEV	  32
 #define QUEUE_SIZE_DEV_TO_HOST	  32
 
-#define LED1_Pin GPIO_PIN_13
-#define LED1_GPIO_Port GPIOC
-#define LED2_Pin GPIO_PIN_14
-#define LED2_GPIO_Port GPIOC
-#define LED3_Pin GPIO_PIN_15
-#define LED3_GPIO_Port GPIOC
-#define FDCAN1_SLEEP_EN_Pin GPIO_PIN_0
+#define LED1_Pin				  GPIO_PIN_13
+#define LED1_GPIO_Port			  GPIOC
+#define LED2_Pin				  GPIO_PIN_14
+#define LED2_GPIO_Port			  GPIOC
+#define LED3_Pin				  GPIO_PIN_15
+#define LED3_GPIO_Port			  GPIOC
+#define FDCAN1_SLEEP_EN_Pin		  GPIO_PIN_0
 #define FDCAN1_SLEEP_EN_GPIO_Port GPIOA
-#define FDCAN1_TERM_EN_Pin GPIO_PIN_1
-#define FDCAN1_TERM_EN_GPIO_Port GPIOA
-#define FDCAN2_SLEEP_EN_Pin GPIO_PIN_2
+#define FDCAN1_TERM_EN_Pin		  GPIO_PIN_1
+#define FDCAN1_TERM_EN_GPIO_Port  GPIOA
+#define FDCAN2_SLEEP_EN_Pin		  GPIO_PIN_2
 #define FDCAN2_SLEEP_EN_GPIO_Port GPIOA
-#define FDCAN2_TERM_EN_Pin GPIO_PIN_3
-#define FDCAN2_TERM_EN_GPIO_Port GPIOA
-#define FDCAN3_SLEEP_EN_Pin GPIO_PIN_4
+#define FDCAN2_TERM_EN_Pin		  GPIO_PIN_3
+#define FDCAN2_TERM_EN_GPIO_Port  GPIOA
+#define FDCAN3_SLEEP_EN_Pin		  GPIO_PIN_4
 #define FDCAN3_SLEEP_EN_GPIO_Port GPIOA
-#define FDCAN3_TERM_EN_Pin GPIO_PIN_5
-#define FDCAN3_TERM_EN_GPIO_Port GPIOA
-#define TPS2116_STAT_Pin GPIO_PIN_6
-#define TPS2116_STAT_GPIO_Port GPIOA
-#define LIN1_MASTER_EN_Pin GPIO_PIN_7
-#define LIN1_MASTER_EN_GPIO_Port GPIOA
-#define FDCAN1_VIO_EN_Pin GPIO_PIN_10
-#define FDCAN1_VIO_EN_GPIO_Port GPIOA
-#define LIN1_nSLEEP_Pin GPIO_PIN_5
-#define LIN1_nSLEEP_GPIO_Port GPIOB
+#define FDCAN3_TERM_EN_Pin		  GPIO_PIN_5
+#define FDCAN3_TERM_EN_GPIO_Port  GPIOA
+#define TPS2116_STAT_Pin		  GPIO_PIN_6
+#define TPS2116_STAT_GPIO_Port	  GPIOA
+#define LIN1_MASTER_EN_Pin		  GPIO_PIN_7
+#define LIN1_MASTER_EN_GPIO_Port  GPIOA
+#define FDCAN1_VIO_EN_Pin		  GPIO_PIN_10
+#define FDCAN1_VIO_EN_GPIO_Port	  GPIOA
+#define LIN1_nSLEEP_Pin			  GPIO_PIN_5
+#define LIN1_nSLEEP_GPIO_Port	  GPIOB
 
 void SystemClock_Config(void);
 void MX_GPIO_Init(void);
