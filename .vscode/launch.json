@@ -16,6 +16,16 @@
         },
         {
             "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/Portable/board_budgetcan_g4/build/budgetcan_g4_fw.elf",
+            "name": "Debug budgetcan_g4",
+            "request": "launch",
+            "type": "cortex-debug",
+            "runToEntryPoint": "main",
+            "showDevDebugOutput": "none",
+            "servertype": "stlink"
+        },
+        {
+            "cwd": "${workspaceFolder}",
             "executable": "${workspaceFolder}/Portable/board_DevEBox/build/DevEBoxH7_fw.elf",
             "name": "Debug DevEbox",
             "request": "launch",
