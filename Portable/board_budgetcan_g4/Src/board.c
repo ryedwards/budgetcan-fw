@@ -307,7 +307,7 @@ void main_init_cb(void)
 
 	hGS_CAN.channels[0] = &hfdcan1;
 	hGS_CAN.channels[1] = &hfdcan2;
-	hGS_CAN.channels[3] = &hfdcan3;
+	hGS_CAN.channels[2] = &hfdcan3;
 	can_init(hGS_CAN.channels[0], FDCAN1);
 	can_init(hGS_CAN.channels[1], FDCAN2);
 	can_init(hGS_CAN.channels[2], FDCAN3);
