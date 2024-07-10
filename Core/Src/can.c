@@ -317,7 +317,7 @@ bool can_send(CAN_HANDLE_TYPEDEF *hcan, struct gs_host_frame *frame)
 #elif defined(FDCAN1)
 	FDCAN_TxHeaderTypeDef TxHeader;
 
-	TxHeader.DataLength = frame->can_dlc << 16;
+	TxHeader.DataLength = frame->can_dlc;
 	TxHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
 	TxHeader.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
 	TxHeader.MessageMarker = 0;
@@ -443,7 +443,7 @@ void HAL_FDCAN_RxFifo0Callback(CAN_HANDLE_TYPEDEF *hcan, uint32_t RxFifo0ITs)
 		frame_object.frame.can_id |= CAN_RTR_FLAG;
 	}
 
-	frame_object.frame.can_dlc = (RxHeader.DataLength & 0x000F0000) >> 16;
+	frame_object.frame.can_dlc = RxHeader.DataLength;
 
 	frame_object.frame.echo_id = 0xFFFFFFFF; // not a echo frame
 	frame_object.frame.reserved = 0;
