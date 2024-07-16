@@ -54,6 +54,10 @@
   #define BOARD_TIM2_PRESCALER    0U
 #endif
 
+#if !defined(BOARD_TIM3_PRESCALER)
+  #define BOARD_TIM3_PRESCALER    0U
+#endif
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -63,6 +67,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim3;
 
 /* USER CODE BEGIN PV */
 static TaskHandle_t xCreatedMainTask;
@@ -78,6 +83,7 @@ uint32_t dfu_reset_to_bootloader_magic;
 /* Private function prototypes -----------------------------------------------*/
 extern void SystemClock_Config(void);
 static void MX_TIM2_Init(void);
+static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 static void task_main(void *argument);
 static void task_queue_to_host(void *argument);
@@ -119,6 +125,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_TIM2_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
   /* Function to allow the board to init any features */
@@ -204,6 +211,51 @@ static void MX_TIM2_Init(void)
 
 }
 
+/**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = BOARD_TIM3_PRESCALER;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 65535;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+  HAL_TIM_Base_Start(&htim3);
+  /* USER CODE END TIM3_Init 2 */
+
+}
+
 /* USER CODE BEGIN 4 */
 /**
   * @brief  Function implementing the task_main thread.
@@ -251,10 +303,6 @@ void task_queue_from_host(void *argument)
       }
 #endif /* LIN_FEATURE_ENABLED */
       if (can_send(hGS_CAN.channels[frame_object.frame.channel], &frame_object.frame)) {
-        /* Echo sent frame back to host */
-        frame_object.frame.reserved = 0x0;
-        xQueueSendToBack(hGS_CAN.queue_to_hostHandle, &frame_object.frame, 0);
-        can_on_tx_cb(frame_object.frame.channel, &frame_object.frame);
       }
       else {
         /* throw the message back onto the queue */
@@ -287,7 +335,6 @@ void task_queue_to_host(void *argument)
     /* Check the queue to see if we have data TO the host to handle */
     if (xQueueReceive(hGS_CAN.queue_to_hostHandle, &frame_object.frame, portMAX_DELAY) == pdPASS) {
       if (USBD_GS_CAN_SendFrame(&hUSB, &frame_object.frame) == USBD_OK) {
-        can_on_rx_cb(frame_object.frame.channel, &frame_object.frame);
       }
       else {
         /* throw the message back onto the queue */

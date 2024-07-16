@@ -36,8 +36,8 @@ THE SOFTWARE.
 #include "usbd_gs_can.h"
 
 static uint32_t can_last_err_status;
-
 extern TIM_HandleTypeDef htim2;
+extern TIM_HandleTypeDef htim3;
 extern USBD_HandleTypeDef hUSB;
 extern USBD_GS_CAN_HandleTypeDef hGS_CAN;
 
@@ -235,6 +235,8 @@ void can_enable(CAN_HANDLE_TYPEDEF *hcan, bool loop_back, bool listen_only, bool
 	   Reject non matching frames with STD ID and EXT ID */
 	HAL_FDCAN_ConfigGlobalFilter(hcan, FDCAN_ACCEPT_IN_RX_FIFO0, FDCAN_ACCEPT_IN_RX_FIFO0, FDCAN_FILTER_REMOTE, FDCAN_FILTER_REMOTE);
 
+	HAL_FDCAN_EnableTimestampCounter(hcan, FDCAN_TIMESTAMP_EXTERNAL);
+	
 	// Start CAN using HAL
 	HAL_FDCAN_Start(hcan);
 
@@ -247,6 +249,7 @@ void can_enable(CAN_HANDLE_TYPEDEF *hcan, bool loop_back, bool listen_only, bool
 								   FDCAN_IT_RAM_WATCHDOG |
 								   FDCAN_IT_BUS_OFF |
 								   FDCAN_IT_ERROR_WARNING, 0);
+	HAL_FDCAN_ActivateNotification(hcan, FDCAN_IT_TX_COMPLETE, FDCAN_TX_BUFFER0 | FDCAN_TX_BUFFER1 | FDCAN_TX_BUFFER2);
 #endif
 	can_on_enable_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan));
 }
@@ -277,6 +280,7 @@ void can_disable(CAN_HANDLE_TYPEDEF *hcan)
 									 FDCAN_IT_RAM_WATCHDOG |
 									 FDCAN_IT_BUS_OFF |
 									 FDCAN_IT_ERROR_WARNING);
+	HAL_FDCAN_DeactivateNotification(hcan, FDCAN_IT_TX_COMPLETE);
 #endif
 	can_on_disable_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan));
 }
@@ -315,12 +319,12 @@ bool can_send(CAN_HANDLE_TYPEDEF *hcan, struct gs_host_frame *frame)
 		return true;
 	}
 #elif defined(FDCAN1)
-	FDCAN_TxHeaderTypeDef TxHeader;
+	FDCAN_TxHeaderTypeDef TxHeader = {0};
 
 	TxHeader.DataLength = frame->can_dlc;
 	TxHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-	TxHeader.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
-	TxHeader.MessageMarker = 0;
+	TxHeader.TxEventFifoControl = FDCAN_STORE_TX_EVENTS;
+	TxHeader.MessageMarker = frame->echo_id & 0xFF;
 
 	if (frame->can_id & CAN_RTR_FLAG) {
 		TxHeader.TxFrameType = FDCAN_REMOTE_FRAME;
@@ -381,6 +385,38 @@ uint8_t can_get_termination(uint8_t channel)
 	return can_get_term_cb(channel);
 }
 
+#if defined(FDCAN1)
+/**
+  * @brief  Register Tx Buffer Complete FDCAN Callback
+  *         To be used instead of the weak HAL_FDCAN_TxBufferCompleteCallback() predefined callback
+  * @param  hfdcan FDCAN handle
+  * @param  pCallback pointer to the Tx Buffer Complete Callback function
+  * @retval HAL status
+  */
+void HAL_FDCAN_TxBufferCompleteCallback(FDCAN_HandleTypeDef *hfdcan, uint32_t BufferIndexes)
+{
+	UNUSED(BufferIndexes);
+	uint8_t channel;
+	struct gs_host_frame_object frame_object = {0};
+	FDCAN_TxEventFifoTypeDef TxFIFOEvent = {0};
+	
+    /* Unsure if needed - but - loop to ensure we pull all pending events out of FIFO */
+	while(HAL_FDCAN_GetTxEvent(hfdcan, &TxFIFOEvent) == HAL_OK) {
+		channel = USBD_GS_CAN_GetChannelNumber(&hUSB, hfdcan);
+		frame_object.frame.channel = channel;
+		frame_object.frame.echo_id = TxFIFOEvent.MessageMarker;
+		frame_object.frame.can_id = TxFIFOEvent.Identifier;
+#if defined(CANFD_FEATURE_ENABLED)		
+		frame_object.frame.canfd_ts->timestamp_us = TxFIFOEvent.TxTimestamp;
+#else
+		frame_object.frame.classic_can_ts->timestamp_us = TxFIFOEvent.TxTimestamp;
+#endif
+		/* Send the echo frame back to the host */
+		xQueueSendToBackFromISR(hGS_CAN.queue_to_hostHandle, &frame_object.frame, NULL);
+		can_on_tx_cb(frame_object.frame.channel, &frame_object.frame);
+	}
+}
+#endif
 /**
   * @brief  Rx FIFO 0 callback.
   * @param  hfdcan pointer to an FDCAN_HandleTypeDef structure that contains
@@ -392,7 +428,7 @@ uint8_t can_get_termination(uint8_t channel)
 #if defined(CAN)
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
-	CAN_RxHeaderTypeDef RxHeader;
+	CAN_RxHeaderTypeDef RxHeader = {0};
 	struct gs_host_frame_object frame_object;
 	/* Get RX message */
 	if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxHeader, (uint8_t*)&frame_object.frame.classic_can->data) != HAL_OK)
@@ -420,13 +456,14 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 
 	/* put this CAN message into the queue to send to host */
 	xQueueSendToBackFromISR(hGS_CAN.queue_to_hostHandle, &frame_object.frame, NULL);
+	can_on_rx_cb(frame_object.frame.channel, &frame_object.frame);
 }
 #elif defined(FDCAN1)
 void HAL_FDCAN_RxFifo0Callback(CAN_HANDLE_TYPEDEF *hcan, uint32_t RxFifo0ITs)
 {
 	UNUSED(RxFifo0ITs);
-	FDCAN_RxHeaderTypeDef RxHeader;
-	struct gs_host_frame_object frame_object;
+	FDCAN_RxHeaderTypeDef RxHeader = {0};
+	struct gs_host_frame_object frame_object = {0};
 
 	if (HAL_FDCAN_GetRxMessage(hcan, FDCAN_RX_FIFO0, &RxHeader, frame_object.frame.canfd->data) != HAL_OK) {
 		return;
@@ -462,6 +499,7 @@ void HAL_FDCAN_RxFifo0Callback(CAN_HANDLE_TYPEDEF *hcan, uint32_t RxFifo0ITs)
 
 	/* put this CAN message into the queue to send to host */
 	xQueueSendToBackFromISR(hGS_CAN.queue_to_hostHandle, &frame_object.frame, NULL);
+	can_on_rx_cb(frame_object.frame.channel, &frame_object.frame);
 }
 #endif
 

@@ -37,6 +37,9 @@ extern "C" {
 
 #define BOARD_SYSMEM_RESET_VECTOR 0x1FFF0000
 
+#define BOARD_TIM2_PRESCALER      160-1
+#define BOARD_TIM3_PRESCALER      160-1
+
 #define USBD_VID				  0x1D50
 #define USBD_LANGID_STRING		  1033
 #define USBD_MANUFACTURER_STRING  (uint8_t*) "budgetcan.io"
