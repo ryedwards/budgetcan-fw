@@ -248,8 +248,9 @@ void can_enable(CAN_HANDLE_TYPEDEF *hcan, bool loop_back, bool listen_only, bool
 								   FDCAN_IT_ARB_PROTOCOL_ERROR |
 								   FDCAN_IT_RAM_WATCHDOG |
 								   FDCAN_IT_BUS_OFF |
-								   FDCAN_IT_ERROR_WARNING, 0);
-	HAL_FDCAN_ActivateNotification(hcan, FDCAN_IT_TX_COMPLETE, FDCAN_TX_BUFFER0 | FDCAN_TX_BUFFER1 | FDCAN_TX_BUFFER2);
+								   FDCAN_IT_ERROR_WARNING |
+								   FDCAN_IT_TX_EVT_FIFO_FULL |
+								   FDCAN_IT_TX_EVT_FIFO_NEW_DATA, 0);
 #endif
 	can_on_enable_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan));
 }
@@ -279,8 +280,9 @@ void can_disable(CAN_HANDLE_TYPEDEF *hcan)
 									 FDCAN_IT_ARB_PROTOCOL_ERROR |
 									 FDCAN_IT_RAM_WATCHDOG |
 									 FDCAN_IT_BUS_OFF |
-									 FDCAN_IT_ERROR_WARNING);
-	HAL_FDCAN_DeactivateNotification(hcan, FDCAN_IT_TX_COMPLETE);
+									 FDCAN_IT_ERROR_WARNING |
+								   	 FDCAN_IT_TX_EVT_FIFO_FULL |
+								     FDCAN_IT_TX_EVT_FIFO_NEW_DATA);
 #endif
 	can_on_disable_cb(USBD_GS_CAN_GetChannelNumber(&hUSB, hcan));
 }
@@ -387,19 +389,21 @@ uint8_t can_get_termination(uint8_t channel)
 
 #if defined(FDCAN1)
 /**
-  * @brief  Register Tx Buffer Complete FDCAN Callback
-  *         To be used instead of the weak HAL_FDCAN_TxBufferCompleteCallback() predefined callback
-  * @param  hfdcan FDCAN handle
-  * @param  pCallback pointer to the Tx Buffer Complete Callback function
-  * @retval HAL status
+  * @brief  Tx Event callback.
+  * @param  hfdcan pointer to an FDCAN_HandleTypeDef structure that contains
+  *         the configuration information for the specified FDCAN.
+  * @param  TxEventFifoITs indicates which Tx Event FIFO interrupts are signaled.
+  *         This parameter can be any combination of @arg FDCAN_Tx_Event_Fifo_Interrupts.
+  * @retval None
   */
-void HAL_FDCAN_TxBufferCompleteCallback(FDCAN_HandleTypeDef *hfdcan, uint32_t BufferIndexes)
+void HAL_FDCAN_TxEventFifoCallback(FDCAN_HandleTypeDef *hfdcan, uint32_t TxEventFifoITs)
 {
-	UNUSED(BufferIndexes);
+	/* We don't care why the IRQ fired, if there are items in the FIFO we will send the echo frame */
+	UNUSED(TxEventFifoITs);
 	uint8_t channel;
 	struct gs_host_frame_object frame_object = {0};
 	FDCAN_TxEventFifoTypeDef TxFIFOEvent = {0};
-	
+
     /* Unsure if needed - but - loop to ensure we pull all pending events out of FIFO */
 	while(HAL_FDCAN_GetTxEvent(hfdcan, &TxFIFOEvent) == HAL_OK) {
 		channel = USBD_GS_CAN_GetChannelNumber(&hUSB, hfdcan);
