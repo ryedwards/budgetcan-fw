@@ -251,7 +251,6 @@ void task_queue_from_host(void *argument)
 {
   UNUSED(argument);
   struct gs_host_frame_object frame_object;
-  bool new_frame;
 
   /* Infinite loop */
   for(;;)
