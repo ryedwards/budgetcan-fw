@@ -443,7 +443,7 @@ void HAL_FDCAN_RxFifo0Callback(CAN_HANDLE_TYPEDEF *hcan, uint32_t RxFifo0ITs)
 		frame_object.frame.can_id |= CAN_RTR_FLAG;
 	}
 
-	frame_object.frame.can_dlc = RxHeader.DataLength & 0x000F0000;
+	frame_object.frame.can_dlc = RxHeader.DataLength;
 
 	frame_object.frame.echo_id = 0xFFFFFFFF; // not a echo frame
 	frame_object.frame.reserved = 0;
