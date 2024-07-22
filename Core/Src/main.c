@@ -69,6 +69,11 @@ static TaskHandle_t xCreatedMainTask;
 static TaskHandle_t xCreatedQtoHostTask;
 static TaskHandle_t xCreatedQfromHostTask;
 
+#if defined (USE_MULTICHANNEL_QUEUE)
+static QueueSetHandle_t xFromHostQueueSet;
+static QueueSetMemberHandle_t xActivatedMember;
+#endif
+
 USBD_HandleTypeDef hUSB;
 USBD_GS_CAN_HandleTypeDef hGS_CAN;
 
@@ -141,7 +146,15 @@ int main(void)
               TASK_Q_FROM_HOST_STACK_PRIORITY, &xCreatedQfromHostTask);
 
   /* Init the RTOS streams and queues */
+#if defined (USE_MULTICHANNEL_QUEUE)
+  xFromHostQueueSet = xQueueCreateSet(QUEUE_SIZE_DEV_TO_HOST * CAN_NUM_CHANNELS);
+  for(uint8_t i=0; i<CAN_NUM_CHANNELS; i++) {
+    hGS_CAN.queue_from_hostHandle[i] = xQueueCreate(QUEUE_SIZE_HOST_TO_DEV, GS_HOST_FRAME_SIZE);
+    xQueueAddToSet(hGS_CAN.queue_from_hostHandle[i], xFromHostQueueSet);
+  }
+#else
   hGS_CAN.queue_from_hostHandle = xQueueCreate(QUEUE_SIZE_HOST_TO_DEV, GS_HOST_FRAME_SIZE);
+#endif
   hGS_CAN.queue_to_hostHandle = xQueueCreate(QUEUE_SIZE_DEV_TO_HOST, GS_HOST_FRAME_SIZE);
 
   /* Start scheduler */
@@ -242,34 +255,37 @@ void task_queue_from_host(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    /* Check the queue to see if we have data FROM the host to handle */
-    if (xQueueReceive(hGS_CAN.queue_from_hostHandle, &frame_object.frame, portMAX_DELAY) == pdPASS){
+#if defined (USE_MULTICHANNEL_QUEUE)
+    /* wait for a queue member to become active */
+    xActivatedMember = xQueueSelectFromSet(xFromHostQueueSet, portMAX_DELAY);
+    xQueueReceive(xActivatedMember, &frame_object.frame, 0); 
+#else
+    xQueueReceive(hGS_CAN.queue_from_hostHandle, &frame_object.frame, portMAX_DELAY);
+#endif
+
 #if defined(LIN_FEATURE_ENABLED)
-      if (IS_LIN_FRAME(frame_object.frame.can_id)) {
-        lin_process_frame(&frame_object.frame);
-        continue; /* just loop again so this frame isn't sent on CAN bus */
-      }
-#endif /* LIN_FEATURE_ENABLED */
-      if (can_send(hGS_CAN.channels[frame_object.frame.channel], &frame_object.frame)) {
-        /* Echo sent frame back to host */
-        frame_object.frame.reserved = 0x0;
-        xQueueSendToBack(hGS_CAN.queue_to_hostHandle, &frame_object.frame, 0);
-        can_on_tx_cb(frame_object.frame.channel, &frame_object.frame);
-      }
-      else {
-        /* throw the message back onto the queue */
-        if (uxQueueSpacesAvailable(hGS_CAN.queue_from_hostHandle) == 0) {
-          /* the pipe to the host is full - delay longer to allow for catchup if needed */
-          vTaskDelay(pdMS_TO_TICKS(10));
-        }
-        else {
-          xQueueSendToFront(hGS_CAN.queue_from_hostHandle, &frame_object.frame, 0);
-          vTaskDelay(pdMS_TO_TICKS(0));
-        }
-      }
+    if (IS_LIN_FRAME(frame_object.frame.can_id)) {
+      lin_process_frame(&frame_object.frame);
+      continue; /* just loop again so this frame isn't sent on CAN bus */
     }
+#endif /* LIN_FEATURE_ENABLED */
+    if (can_send(hGS_CAN.channels[frame_object.frame.channel], &frame_object.frame)) {
+      /* Echo sent frame back to host */
+      frame_object.frame.reserved = 0x0;
+      xQueueSendToBack(hGS_CAN.queue_to_hostHandle, &frame_object.frame, 0);
+      can_on_tx_cb(frame_object.frame.channel, &frame_object.frame);
+    }
+    else {
+#if defined (USE_MULTICHANNEL_QUEUE)
+        xQueueSendToFront(hGS_CAN.queue_from_hostHandle[frame_object.frame.channel], &frame_object.frame, 0);
+#else
+        xQueueSendToFront(hGS_CAN.queue_from_hostHandle, &frame_object.frame, 0);
+#endif
+    } 
   }
+  vTaskDelay(pdMS_TO_TICKS(0));  
 }
+
 
 /**
   * @brief  Function implementing thread for handling messages TO host.
