@@ -19,6 +19,21 @@
             "problemMatcher": "$msCompile"
         },
         {
+            "label": "Build budgetcan_g4",
+            "type": "shell",
+            "command": "make",
+            "options": {
+                "cwd": "${workspaceRoot}/Portable/board_budgetcan_g4/"
+            },
+            "args": [
+            ],
+            "group": "build",
+            "presentation": {
+            },
+            // Use the standard MS compiler pattern to detect errors, warnings and infos
+            "problemMatcher": "$msCompile"
+        },
+        {
             "label": "Build canablev1",
             "type": "shell",
             "command": "make",
