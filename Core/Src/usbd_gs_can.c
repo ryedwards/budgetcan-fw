@@ -551,7 +551,7 @@ static uint8_t USBD_GS_CAN_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
 	}
 
 	// Enqueue the frame we just received.
-#if (USE_MULTICHANNEL_QUEUE == 1)	
+#if defined (USE_MULTICHANNEL_QUEUE)
 	xQueueSendToBackFromISR(hGS_CAN.queue_from_hostHandle[hcan->from_host_frame.frame.channel], &hcan->from_host_frame, NULL);
 #else
 	xQueueSendToBackFromISR(hGS_CAN.queue_from_hostHandle, &hcan->from_host_frame, NULL);

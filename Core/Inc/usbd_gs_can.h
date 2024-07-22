@@ -78,7 +78,7 @@ typedef struct {
 	USBD_SetupReqTypedef last_setup_request;
 	struct gs_host_frame_object from_host_frame;
 	CAN_HANDLE_TYPEDEF *channels[CAN_NUM_CHANNELS];
-#if (USE_MULTICHANNEL_QUEUE == 1)
+#if defined (USE_MULTICHANNEL_QUEUE)
 	QueueHandle_t queue_from_hostHandle[CAN_NUM_CHANNELS];
 #else
 	QueueHandle_t queue_from_hostHandle;

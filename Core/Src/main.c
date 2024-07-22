@@ -69,7 +69,7 @@ static TaskHandle_t xCreatedMainTask;
 static TaskHandle_t xCreatedQtoHostTask;
 static TaskHandle_t xCreatedQfromHostTask;
 
-#if (USE_MULTICHANNEL_QUEUE == 1)
+#if defined (USE_MULTICHANNEL_QUEUE)
 static QueueSetHandle_t xFromHostQueueSet;
 static QueueSetMemberHandle_t xActivatedMember;
 #endif
@@ -146,7 +146,7 @@ int main(void)
               TASK_Q_FROM_HOST_STACK_PRIORITY, &xCreatedQfromHostTask);
 
   /* Init the RTOS streams and queues */
-#if (USE_MULTICHANNEL_QUEUE == 1)
+#if defined (USE_MULTICHANNEL_QUEUE)
   xFromHostQueueSet = xQueueCreateSet(QUEUE_SIZE_DEV_TO_HOST * CAN_NUM_CHANNELS);
   for(uint8_t i=0; i<CAN_NUM_CHANNELS; i++) {
     hGS_CAN.queue_from_hostHandle[i] = xQueueCreate(QUEUE_SIZE_HOST_TO_DEV, GS_HOST_FRAME_SIZE);
@@ -255,7 +255,7 @@ void task_queue_from_host(void *argument)
   /* Infinite loop */
   for(;;)
   {
-#if (USE_MULTICHANNEL_QUEUE == 1)
+#if defined (USE_MULTICHANNEL_QUEUE)
     /* wait for a queue member to become active */
     xActivatedMember = xQueueSelectFromSet(xFromHostQueueSet, portMAX_DELAY);
     xQueueReceive(xActivatedMember, &frame_object.frame, 0); 
@@ -276,7 +276,7 @@ void task_queue_from_host(void *argument)
       can_on_tx_cb(frame_object.frame.channel, &frame_object.frame);
     }
     else {
-#if (USE_MULTICHANNEL_QUEUE == 1)
+#if defined (USE_MULTICHANNEL_QUEUE)
         xQueueSendToFront(hGS_CAN.queue_from_hostHandle[frame_object.frame.channel], &frame_object.frame, 0);
 #else
         xQueueSendToFront(hGS_CAN.queue_from_hostHandle, &frame_object.frame, 0);
