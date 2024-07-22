@@ -31,6 +31,36 @@
             ]
         },
         {
+            "name": "board_budgetcan_g4",
+            "includePath": [
+                "${workspaceFolder}/Portable/board_budgetcan_g4/Inc",
+                "${workspaceFolder}/Core/Inc",
+                "${workspaceFolder}/Drivers/stm32g4xx_hal_driver/Inc",
+                "${workspaceFolder}/Drivers/stm32g4xx_hal_driver/Inc",
+                "${workspaceFolder}/Drivers/stm32g4xx_hal_driver/Inc/Legacy",
+                "${workspaceFolder}/Drivers/cmsis_device_g4/Include",
+                "${workspaceFolder}/Drivers/CMSIS/include",
+                "${workspaceFolder}/Middlewares/ST/STM32_USB_Device_Library/Core/Inc",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/include",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/portable/GCC/ARM_CM4F",
+                "${env:ARMGCC}/**"
+            ],
+            "defines": [
+                "STM32G473xx",
+                "USE_HAL_DRIVER"
+            ],
+            "compilerPath": "${env:ARMGCC}/arm-none-eabi-gcc.exe",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "clang-arm64",
+            "configurationProvider": "ms-vscode.makefile-tools",
+            "compilerArgs": [
+                "-Wall",
+                "-Wextra ",
+                "-Wstrict-prototypes"
+            ]
+        },
+        {
             "name": "board_DevEBoxH7",
             "includePath": [
                 "${workspaceFolder}/Portable/board_DevEBoxH7/Inc",
