@@ -501,7 +501,7 @@ void HAL_FDCAN_RxFifo0Callback(CAN_HANDLE_TYPEDEF *hcan, uint32_t RxFifo0ITs)
 
 	}
 
-	frame_object.frame.canfd_ts->timestamp_us = __HAL_TIM_GET_COUNTER(&htim2);
+	frame_object.frame.canfd_ts->timestamp_us = RxHeader.RxTimestamp;
 
 	/* put this CAN message into the queue to send to host */
 	xQueueSendToBackFromISR(hGS_CAN.queue_to_hostHandle, &frame_object.frame, NULL);
