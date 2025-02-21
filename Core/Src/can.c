@@ -50,7 +50,7 @@ static bool can_parse_error_status(uint32_t err, uint32_t last_err, CAN_HANDLE_T
  */
 void can_init(CAN_HANDLE_TYPEDEF *hcan, CAN_TYPEDEF *instance)
 {
-#if defined(CAN)
+#if defined(CAN) || defined(CAN1)
 	hcan->Instance = instance;
 	hcan->Init.TimeTriggeredMode = CAN_TIME_TRG_MODE_INIT;
 	hcan->Init.AutoBusOff = CAN_AUTO_BUS_OFF_INIT;
@@ -122,7 +122,7 @@ void can_set_bittiming(CAN_HANDLE_TYPEDEF *hcan, uint16_t brp, uint8_t phase_seg
 	   && (phase_seg2 > 0) && (phase_seg2 <= 8)
 	   && (sjw > 0) && (sjw <= 4))
 	{
-#if defined(CAN)
+#if defined(CAN) || defined(CAN1)
 		hcan->Init.SyncJumpWidth = (sjw-1) << CAN_BTR_SJW_Pos;
 		hcan->Init.TimeSeg1 = (phase_seg1-1) << CAN_BTR_TS1_Pos;
 		hcan->Init.TimeSeg2 = (phase_seg2-1) << CAN_BTR_TS2_Pos;;
@@ -151,7 +151,7 @@ void can_set_data_bittiming(CAN_HANDLE_TYPEDEF *hcan, uint16_t brp, uint8_t phas
 	   && (phase_seg2 > 0) && (phase_seg2 <= 8)
 	   && (sjw > 0) && (sjw <= 4))
 	{
-#if defined(CAN)
+#if defined(CAN) || defined(CAN1)
 		UNUSED(hcan);
 		UNUSED(brp);
 		UNUSED(phase_seg1);
@@ -176,7 +176,7 @@ void can_set_data_bittiming(CAN_HANDLE_TYPEDEF *hcan, uint16_t brp, uint8_t phas
  */
 void can_enable(CAN_HANDLE_TYPEDEF *hcan, bool loop_back, bool listen_only, bool one_shot, bool can_mode_fd)
 {
-#if defined(CAN)
+#if defined(CAN) || defined(CAN1)
 	UNUSED(can_mode_fd);
 
 	hcan->Init.AutoRetransmission = one_shot ? DISABLE : ENABLE;
@@ -257,7 +257,7 @@ void can_enable(CAN_HANDLE_TYPEDEF *hcan, bool loop_back, bool listen_only, bool
  */
 void can_disable(CAN_HANDLE_TYPEDEF *hcan)
 {
-#if defined(CAN)
+#if defined(CAN) || defined(CAN1)
 	HAL_CAN_Stop(hcan);
 	HAL_CAN_DeactivateNotification(hcan, CAN_IT_RX_FIFO0_MSG_PENDING |
 								   CAN_IT_ERROR_WARNING |
@@ -283,7 +283,7 @@ void can_disable(CAN_HANDLE_TYPEDEF *hcan)
 
 bool can_is_enabled(CAN_HANDLE_TYPEDEF *hcan)
 {
-#if defined(CAN)
+#if defined(CAN) || defined(CAN1)
 	return hcan->State == HAL_CAN_STATE_LISTENING;
 #elif defined(FDCAN1)
 	return hcan->State == HAL_FDCAN_STATE_BUSY;
@@ -297,7 +297,7 @@ bool can_is_enabled(CAN_HANDLE_TYPEDEF *hcan)
  */
 bool can_send(CAN_HANDLE_TYPEDEF *hcan, struct gs_host_frame *frame)
 {
-#if defined(CAN)
+#if defined(CAN) || defined(CAN1)
 	CAN_TxHeaderTypeDef TxHeader;
 	uint32_t TxMailbox;
 
@@ -389,7 +389,7 @@ uint8_t can_get_termination(uint8_t channel)
   *         This parameter can be any combination of @arg FDCAN_Rx_Fifo0_Interrupts.
   * @retval None
   */
-#if defined(CAN)
+#if defined(CAN) || defined(CAN1)
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
 	CAN_RxHeaderTypeDef RxHeader;
@@ -473,7 +473,7 @@ void HAL_FDCAN_RxFifo0Callback(CAN_HANDLE_TYPEDEF *hcan, uint32_t RxFifo0ITs)
   *         This parameter can be any combination of @arg FDCAN_Error_Status_Interrupts.
   * @retval None
   */
-#if defined(CAN)
+#if defined(CAN) || defined(CAN1)
 void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan)
 {
 	struct gs_host_frame_object frame_object;
@@ -506,7 +506,7 @@ void HAL_FDCAN_ErrorStatusCallback(CAN_HANDLE_TYPEDEF *hcan, uint32_t ErrorStatu
 
 static bool status_is_active(uint32_t err)
 {
-#if defined(CAN)
+#if defined(CAN) || defined(CAN1)
 	return !(err & (CAN_ESR_BOFF | CAN_ESR_EPVF));
 #elif defined(FDCAN1)
 	return !(err & (FDCAN_PSR_BO | FDCAN_PSR_EP));
@@ -545,7 +545,7 @@ bool can_parse_error_status(uint32_t err, uint32_t last_err, CAN_HANDLE_TYPEDEF 
 		should_send = true;
 	}
 
-#if defined(CAN)
+#if defined(CAN) || defined(CAN1)
 	UNUSED(hcan);
 	if (err & CAN_ESR_BOFF) {
 		if (!(last_err & CAN_ESR_BOFF)) {
