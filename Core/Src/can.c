@@ -188,7 +188,9 @@ void can_enable(CAN_HANDLE_TYPEDEF *hcan, bool loop_back, bool listen_only, bool
 
 	// Configure reception filter to Rx FIFO 0
 	CAN_FilterTypeDef sFilterConfig;
-	sFilterConfig.FilterBank = 0;
+    // When using both bxCAN interfaces (for those that support it) the upper 14 filters need to be used by setting SlaveStartFilterBank to 14
+    // see https://community.st.com/t5/stm32-mcus/stm32-in-dual-can-configuration-bxcan-filter-bank-explanation/ta-p/698739
+	sFilterConfig.FilterBank = hcan->Instance == CAN2 ? 14 : 0;
 	sFilterConfig.FilterMode = CAN_FILTERMODE_IDMASK;
 	sFilterConfig.FilterScale = CAN_FILTERSCALE_32BIT;
 	sFilterConfig.FilterIdHigh = 0x0000;
